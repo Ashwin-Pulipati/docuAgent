@@ -19,7 +19,7 @@ inngest_client = get_inngest_client()
 
 chunker = LlamaIndexChunker()
 embedder = OpenAIEmbedder(api_key=settings.openai_api_key, model=settings.embed_model)
-store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+# store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
 storage = LocalStorage(settings.uploads_dir)
 
 
@@ -48,15 +48,23 @@ class Upserted(BaseModel):
 async def inngest_pdf(ctx: inngest.Context):
     doc_id = str(ctx.event.data["doc_id"])
 
-    async def _load_and_chunk() -> Chunked:
+    async def _load_and_chunk() -> dict:
         pdf_path = str(ctx.event.data["pdf_path"])
         source_id = str(ctx.event.data.get("source_id", pdf_path))
         sha256 = str(ctx.event.data.get("sha256", ""))
 
         chunks = chunker.load_and_chunk_pdf(pdf_path)
-        return Chunked(doc_id=doc_id, source_id=source_id, sha256=sha256, pdf_path=pdf_path, chunks=chunks)
+        return Chunked(doc_id=doc_id, source_id=source_id, sha256=sha256, pdf_path=pdf_path, chunks=chunks).model_dump()
 
-    async def _embed_and_upsert(payload: Chunked) -> Upserted:
+    async def _embed_and_upsert(payload_dict: dict) -> dict:
+        payload = Chunked.model_validate(payload_dict)
+        
+        if not payload.chunks:
+            return Upserted(ingested=0).model_dump()
+
+        # Lazy init Qdrant to avoid module-level connection issues
+        store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+        
         vecs = embedder.embed(payload.chunks)
        
         ids = [str(uuid.uuid5(uuid.NAMESPACE_URL, f"{payload.doc_id}:{i}")) for i in range(len(payload.chunks))]
@@ -73,19 +81,19 @@ async def inngest_pdf(ctx: inngest.Context):
         ]
 
         store.upsert(ids, vecs, payloads)
-        return Upserted(ingested=len(payload.chunks))
+        return Upserted(ingested=len(payload.chunks)).model_dump()
 
     try:
         chunked = await ctx.step.run("load-and-chunk", _load_and_chunk)
         upserted = await ctx.step.run("embed-and-upsert", lambda: _embed_and_upsert(chunked))
         
         with Session(engine) as session:
-            DocumentRepo(session).mark_ingested(doc_id, upserted.ingested)
+            DocumentRepo(session).mark_ingested(doc_id, upserted["ingested"])
        
         if settings.delete_pdf_after_ingest:
-            storage.delete(chunked.pdf_path)
+            storage.delete(chunked["pdf_path"])
 
-        return {"doc_id": doc_id, "ingested": upserted.ingested}
+        return {"doc_id": doc_id, "ingested": upserted["ingested"]}
 
     except Exception as e:
         with Session(engine) as session:

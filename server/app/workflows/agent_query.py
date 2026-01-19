@@ -17,7 +17,7 @@ from app.api.schemas import Citation
 inngest_client = get_inngest_client()
 
 embedder = OpenAIEmbedder(api_key=settings.openai_api_key, model=settings.embed_model)
-store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+# store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
 
 adapter = ai.openai.Adapter(
     auth_key=settings.openai_api_key,
@@ -45,6 +45,9 @@ async def agent_query(ctx: inngest.Context):
     doc_id: Optional[str] = ctx.event.data.get("doc_id")  # type: ignore
 
     async def _retrieve():
+        # Lazy init Qdrant
+        store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+        
         qvec = embedder.embed([question])[0]
         chunks = store.search(qvec, top_k=top_k, doc_id=doc_id)
         return [dataclasses.asdict(c) for c in chunks]
