@@ -99,4 +99,7 @@ def job_status(event_id: str):
 def list_documents():
     with Session(engine) as session:
         docs = session.exec(select(Document).order_by(desc(col(Document.created_at)))).all()
-        return [{"doc_id": d.doc_id, "name": d.source_filename, "status": d.status} for d in docs]
+        return [
+            {"doc_id": d.doc_id, "name": d.source_filename, "status": d.status, "ingested_chunks": d.ingested_chunks}
+            for d in docs
+            ]
