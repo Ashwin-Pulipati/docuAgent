@@ -38,12 +38,6 @@ class Upserted(BaseModel):
 @inngest_client.create_function(
     fn_id="RAG: Ingest PDF (Postgres + Qdrant)",
     trigger=inngest.TriggerEvent(event="rag/inngest_pdf"),
-    throttle=inngest.Throttle(limit=2, period=datetime.timedelta(minutes=1)),
-    rate_limit=inngest.RateLimit(
-        limit=1,
-        period=datetime.timedelta(hours=4),
-        key="event.data.source_id",
-    ),
 )
 async def inngest_pdf(ctx: inngest.Context):
     doc_id = str(ctx.event.data["doc_id"])
