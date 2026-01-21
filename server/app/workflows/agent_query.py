@@ -4,15 +4,21 @@ import json
 import dataclasses
 import inngest
 import typing
+import logging
 from typing import Optional, Any, Literal
 from pydantic import BaseModel
 from inngest.experimental import ai
+from sqlmodel import Session
 
 from app.settings import settings
 from app.workflows.inngest_app import get_inngest_client
 from app.services.embeddings import OpenAIEmbedder
 from app.services.vector_store import QdrantVectorStore
+from app.services.db import engine
+from app.services.repositories import DocumentRepo
 from app.api.schemas import Citation
+
+logger = logging.getLogger(__name__)
 
 inngest_client = get_inngest_client()
 
@@ -42,14 +48,47 @@ class AgenticRAGResult(BaseModel):
 async def agent_query(ctx: inngest.Context):
     question = str(ctx.event.data.get("question") or "").strip()
     top_k = int(str(ctx.event.data.get("top_k", settings.default_top_k)))
-    doc_id: Optional[str] = ctx.event.data.get("doc_id")  # type: ignore
+    doc_id: Optional[str] = ctx.event.data.get("doc_id")
+    folder_id: Optional[int] = ctx.event.data.get("folder_id")
 
     async def _retrieve():
+        target_doc_ids: Optional[list[str]] = None
+        is_folder_search = False
+        
+        logger.info(f"Agent Query: doc_id={doc_id}, folder_id={folder_id}")
+
+        if doc_id:
+            target_doc_ids = [doc_id]
+        elif folder_id:
+            is_folder_search = True
+            with Session(engine) as session:
+                docs = DocumentRepo(session).get_by_folder(folder_id)
+                target_doc_ids = [d.doc_id for d in docs]
+                logger.info(f"Found {len(target_doc_ids)} docs in folder {folder_id}: {target_doc_ids}")
+                if not target_doc_ids:
+                    # Folder empty
+                    return []
+
         # Lazy init Qdrant
         store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
         
         qvec = embedder.embed([question])[0]
-        chunks = store.search(qvec, top_k=top_k, doc_id=doc_id)
+        
+        if is_folder_search:
+            # For folders, we want to search across all documents.
+            # We use a higher top_k to ensure we capture enough context from potentially multiple documents.
+            # We use standard search (not grouped) to allow the most relevant chunks to bubble up, 
+            # even if they all come from the same document (which is better for specific QA).
+            effective_top_k = max(top_k, 20)
+            logger.info(f"Executing folder search with top_k={effective_top_k}...")
+            chunks = store.search(qvec, top_k=effective_top_k, doc_ids=target_doc_ids)
+        else:
+            chunks = store.search(qvec, top_k=top_k, doc_ids=target_doc_ids)
+            
+        logger.info(f"Retrieved {len(chunks)} chunks.")
+        unique_sources = {c.source for c in chunks}
+        logger.info(f"Unique sources in chunks: {unique_sources}")
+
         return [dataclasses.asdict(c) for c in chunks]
 
     retrieved = await ctx.step.run("retrieve", _retrieve)

@@ -10,10 +10,30 @@ class UploadResponse(BaseModel):
     ingest_event_id: str
 
 
+class FolderCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class FolderUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class FolderResponse(BaseModel):
+    id: int
+    name: str
+    created_at: str
+
+
+class UpdateDocumentRequest(BaseModel):
+    name: Optional[str] = None
+    folder_id: Optional[int] = None
+
+
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     top_k: int = Field(default=6, ge=1, le=20)
     doc_id: Optional[str] = None 
+    folder_id: Optional[int] = None
 
 
 class QueryResponse(BaseModel):

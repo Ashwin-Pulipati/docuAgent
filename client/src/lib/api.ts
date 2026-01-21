@@ -1,9 +1,17 @@
 import { z } from "zod";
 
+export const FolderSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  created_at: z.string(),
+});
+export type Folder = z.infer<typeof FolderSchema>;
+
 export const DocumentSchema = z.object({
   doc_id: z.string(),
   name: z.string(),
   status: z.string(),
+  folder_id: z.number().nullable().optional(),
 });
 export type Document = z.infer<typeof DocumentSchema>;
 
@@ -15,6 +23,7 @@ export const UploadResponseSchema = z.object({
 export type UploadResponse = z.infer<typeof UploadResponseSchema>;
 
 export const AgenticResultSchema = z.object({
+// ... (keep as is)
   intent: z.enum(["qa", "summarize", "extract", "clarify"]),
   answer: z.string().optional().default(""),
   citations: z
@@ -60,6 +69,49 @@ async function safeJson(res: Response): Promise<unknown> {
   }
 }
 
+export async function listFolders(): Promise<Folder[]> {
+  const res = await fetch(`${API_BASE_URL}/folders`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch folders");
+  const data = await res.json();
+  return z.array(FolderSchema).parse(data);
+}
+
+export async function createFolder(name: string): Promise<Folder> {
+  const res = await fetch(`${API_BASE_URL}/folders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Failed to create folder");
+  const data = await res.json();
+  return FolderSchema.parse(data);
+}
+
+export async function updateFolder(folderId: number, name: string): Promise<Folder> {
+  const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Failed to update folder");
+  const data = await res.json();
+  return FolderSchema.parse(data);
+}
+
+export async function deleteFolder(folderId: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete folder");
+}
+
+export async function deleteDocument(docId: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/documents/${docId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete document");
+}
+
 export async function listDocuments(): Promise<Document[]> {
   const res = await fetch(`${API_BASE_URL}/documents`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch documents");
@@ -67,9 +119,11 @@ export async function listDocuments(): Promise<Document[]> {
   return z.array(DocumentSchema).parse(data);
 }
 
-export async function uploadDocument(file: File): Promise<UploadResponse> {
+export async function uploadDocuments(files: File[], folderId?: number, folderName?: string): Promise<UploadResponse[]> {
   const formData = new FormData();
-  formData.append("file", file);
+  files.forEach(f => formData.append("files", f));
+  if (folderId) formData.append("folder_id", folderId.toString());
+  if (folderName) formData.append("folder_name", folderName);
 
   const res = await fetch(`${API_BASE_URL}/documents`, {
     method: "POST",
@@ -83,24 +137,41 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
         String((err as { detail?: unknown }).detail ?? "Upload failed"),
       );
     }
-    throw new Error("Failed to upload document");
+    throw new Error("Failed to upload documents");
   }
 
   const data = await res.json();
-  return UploadResponseSchema.parse(data);
+  return z.array(UploadResponseSchema).parse(data);
+}
+
+export async function updateDocument(docId: string, updates: { name?: string; folder_id?: number | null }): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/documents/${docId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+      const err = await safeJson(res);
+      if (typeof err === "object" && err && "detail" in err) {
+        throw new Error(String((err as { detail?: unknown }).detail ?? "Update failed"));
+      }
+      throw new Error("Failed to update document");
+  }
 }
 
 export async function postQuery(
   question: string,
   doc_id: string | null,
   top_k = 6,
+  folder_id: number | null = null,
 ): Promise<QueryResponse> {
-  const payload: { question: string; doc_id?: string | null; top_k?: number } =
+  const payload: { question: string; doc_id?: string | null; top_k?: number; folder_id?: number | null } =
     {
       question,
       top_k,
     };
   if (doc_id) payload.doc_id = doc_id;
+  if (folder_id) payload.folder_id = folder_id;
 
   const res = await fetch(`${API_BASE_URL}/query`, {
     method: "POST",
@@ -125,6 +196,7 @@ export async function postQuery(
 export async function getJobStatus(
   eventId: string,
 ): Promise<JobStatusResponse> {
+// ... (keep as is)
   const res = await fetch(`${API_BASE_URL}/jobs/${eventId}`, {
     cache: "no-store",
   });
