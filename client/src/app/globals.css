@@ -1,13 +1,41 @@
+/* globals.css */
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-size-xs: var(--fluid-xs); /* Tooltips, captions, labels */
+  --font-size-sm: var(--fluid-sm); /* Small text, buttons, input labels */
+  --font-size-md: var(--fluid-md); /* Body text, paragraph */
+  --font-size-lg: var(--fluid-lg); /* H6, H5, small headings */
+  --font-size-xl: var(--fluid-xl); /* H4, H3, subheadings */
+  --font-size-2xl: var(--fluid-2xl); /* H2, section titles */
+  --font-size-3xl: var(--fluid-3xl); /* H1, hero title */
+  --font-size-4xl: var(--fluid-4xl);
+  --font-size-5xl: var(--fluid-5xl);
+  --font-size-6xl: var(--fluid-6xl);
+  --font-size-7xl: var(--fluid-7xl);
+  --line-height: var(--fluid-line); /* Universal line-height */
+
+  --max-w-xs: var(--fluid-w-xs);
+  --max-w-sm: var(--fluid-w-sm);
+  --max-w-md: var(--fluid-w-md);
+  --max-w-lg: var(--fluid-w-lg);
+  --max-w-xl: var(--fluid-w-xl);
+  --max-w-2xl: var(--fluid-w-2xl);
+  --max-w-3xl: var(--fluid-w-3xl);
+  --max-w-4xl: var(--fluid-w-4xl);
+  --max-w-5xl: var(--fluid-w-5xl);
+  --max-w-6xl: var(--fluid-w-6xl);
+  --max-w-7xl: var(--fluid-w-7xl);
+
+  --font-sans: var(--font-nunitoSans); /* Body */
+  --font-mono: var(--font-nunito); /* Subheadings */
+  --font-display: var(--font-tangerine); /* Main Headings */
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -37,6 +65,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -45,7 +74,7 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Catppuccin Macchiato Palette */
+  /* Catppuccin Macchiato Palette tokens (kept for reference/usage) */
   --color-rosewater: #f4dbd6;
   --color-flamingo: #f0c6c6;
   --color-pink: #f5bde6;
@@ -79,94 +108,141 @@
 
   @keyframes gradient-x {
     0%, 100% {
-        background-size: 200% 200%;
-        background-position: left center;
+      background-size: 200% 200%;
+      background-position: left center;
     }
     50% {
-        background-size: 200% 200%;
-        background-position: right center;
+      background-size: 200% 200%;
+      background-position: right center;
     }
   }
   @keyframes gradient-y {
     0%, 100% {
-        background-size: 200% 200%;
-        background-position: top center;
+      background-size: 200% 200%;
+      background-position: top center;
     }
     50% {
-        background-size: 200% 200%;
-        background-position: bottom center;
+      background-size: 200% 200%;
+      background-position: bottom center;
     }
   }
   @keyframes gradient-xy {
     0%, 100% {
-        background-size: 400% 400%;
-        background-position: left center;
+      background-size: 400% 400%;
+      background-position: left center;
     }
     50% {
-        background-size: 200% 200%;
-        background-position: right center;
+      background-size: 200% 200%;
+      background-position: right center;
     }
   }
 }
 
+/* =========================
+   LIGHT MODE = CATPPUCCIN LATTE
+   ========================= */
 :root {
+  --fluid-xs: clamp(0.75rem, 1vw, 0.875rem);
+  --fluid-sm: clamp(0.875rem, 1.2vw, 1rem);
+  --fluid-md: clamp(1rem, 1.5vw, 1.125rem);
+  --fluid-lg: clamp(1.25rem, 2vw, 1.5rem);
+  --fluid-xl: clamp(1.5rem, 2.5vw, 2rem);
+  --fluid-2xl: clamp(1.75rem, 3vw, 2.5rem);
+  --fluid-3xl: clamp(2rem, 4vw, 3rem);
+  --fluid-4xl: clamp(2.25rem, 4.5vw, 3.5rem);
+  --fluid-5xl: clamp(2.75rem, 5.25vw, 4.25rem);
+  --fluid-6xl: clamp(3.25rem, 6vw, 5.25rem);
+  --fluid-7xl: clamp(3.75rem, 7vw, 6.25rem);
+  --fluid-line: 1.5;
+
+  --fluid-w-xs: clamp(20rem, 55vw, 24rem);
+  --fluid-w-sm: clamp(24rem, 60vw, 30rem);
+  --fluid-w-md: clamp(28rem, 64vw, 36rem);
+  --fluid-w-lg: clamp(32rem, 68vw, 42rem);
+  --fluid-w-xl: clamp(36rem, 72vw, 48rem);
+  --fluid-w-2xl: clamp(42rem, 76vw, 56rem);
+  --fluid-w-3xl: clamp(48rem, 80vw, 64rem);
+  --fluid-w-4xl: clamp(56rem, 84vw, 72rem);
+  --fluid-w-5xl: clamp(64rem, 88vw, 80rem);
+  --fluid-w-6xl: clamp(72rem, 92vw, 88rem);
+  --fluid-w-7xl: clamp(80rem, 96vw, 96rem);
+
   --radius: 0.625rem;
-  /* Catppuccin Macchiato as Default (Dark) */
-  --background: #24273a;
-  --foreground: #cad3f5;
-  --card: #1e2030;
-  --card-foreground: #cad3f5;
-  --popover: #1e2030;
-  --popover-foreground: #cad3f5;
-  --primary: #a6da95;
-  --primary-foreground: #24273a;
-  --secondary: #91d7e3;
-  --secondary-foreground: #24273a;
-  --muted: #363a4f;
-  --muted-foreground: #a5adcb;
-  --accent: #f5bde6;
-  --accent-foreground: #24273a;
-  --destructive: #ed8796;
-  --border: #494d64;
-  --input: #494d64;
-  --ring: #a6da95;
 
-  --chart-1: #8aadf4;
-  --chart-2: #a6da95;
-  --chart-3: #f5a97f;
-  --chart-4: #c6a0f6;
-  --chart-5: #ee99a0;
+  /* Latte neutrals */
+  --background: #eff1f5;            /* Base */
+  --foreground: #4c4f69;            /* Text */
+  --card: #e6e9ef;                  /* Mantle */
+  --card-foreground: #4c4f69;
+  --popover: #e6e9ef;
+  --popover-foreground: #4c4f69;
 
-  --sidebar: #1e2030;
-  --sidebar-foreground: #cad3f5;
-  --sidebar-primary: #a6da95;
-  --sidebar-primary-foreground: #24273a;
-  --sidebar-accent: #f5bde6;
-  --sidebar-accent-foreground: #24273a;
-  --sidebar-border: #494d64;
-  --sidebar-ring: #a6da95;
+  /* Latte accents (Catppuccin Latte) */
+  --primary: #40a02b;               /* Green */
+  --primary-foreground: #eff1f5;    /* Light base for contrast */
+  --secondary: #04a5e5;             /* Sky */
+  --secondary-foreground: #eff1f5;
+  --accent: #ea76cb;                /* Pink */
+  --accent-foreground: #eff1f5;
+
+  --muted: #ccd0da;                 /* Surface0 */
+  --muted-foreground: #6c6f85;      /* Subtext0 */
+  --destructive: #d20f39;           /* Red */
+
+  --border: #bcc0cc;                /* Surface1 */
+  --input: #bcc0cc;
+  --ring: #40a02b;
+
+  /* Charts (Latte-friendly) */
+  --chart-1: #1e66f5; /* Blue */
+  --chart-2: #40a02b; /* Green */
+  --chart-3: #fe640b; /* Peach */
+  --chart-4: #8839ef; /* Mauve */
+  --chart-5: #e64553; /* Maroon */
+
+  /* Sidebar (Latte) */
+  --sidebar: #e6e9ef;
+  --sidebar-foreground: #4c4f69;
+  --sidebar-primary: #40a02b;
+  --sidebar-primary-foreground: #eff1f5;
+  --sidebar-accent: #ea76cb;
+  --sidebar-accent-foreground: #eff1f5;
+  --sidebar-border: #bcc0cc;
+  --sidebar-ring: #40a02b;
+
+  /* Used by your inversion hover text if you choose */
+  --accent-contrast: #ea76cb;
 }
 
+/* =========================
+   DARK MODE = CATPPUCCIN MACCHIATO
+   ========================= */
 .dark {
-  --background: #181926;
-  --foreground: #cad3f5;
-  --card: #24273a;
+  /* Macchiato neutrals */
+  --background: #181926;            /* Crust */
+  --foreground: #cad3f5;            /* Text */
+  --card: #24273a;                  /* Base */
   --card-foreground: #cad3f5;
   --popover: #24273a;
   --popover-foreground: #cad3f5;
-  --primary: #a6da95;
+
+  /* Macchiato accents */
+  --primary: #a6da95;               /* Green */
   --primary-foreground: #24273a;
-  --secondary: #91d7e3;
+  --secondary: #91d7e3;             /* Sky */
   --secondary-foreground: #24273a;
-  --muted: #363a4f;
-  --muted-foreground: #a5adcb;
-  --accent: #f5bde6;
+  --accent: #f5bde6;                /* Pink */
   --accent-foreground: #24273a;
-  --destructive: #ed8796;
-  --border: #494d64;
+
+  --muted: #363a4f;                 /* Surface0 */
+  --muted-foreground: #a5adcb;      /* Subtext0 */
+  --destructive: #ed8796;           /* Red */
+
+  --border: #494d64;                /* Surface1 */
   --input: #494d64;
   --ring: #a6da95;
 
+  /* Sidebar (Macchiato) */
   --sidebar: #181926;
   --sidebar-foreground: #cad3f5;
   --sidebar-primary: #a6da95;
@@ -175,6 +251,9 @@
   --sidebar-accent-foreground: #24273a;
   --sidebar-border: #494d64;
   --sidebar-ring: #a6da95;
+
+  /* Your requested brighter “pink” for inversion text in dark mode */
+  --accent-contrast: #FAE1F3;
 }
 
 @layer base {
@@ -183,21 +262,33 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: var(--fluid-md);
+    line-height: var(--fluid-line);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 /* ---------- Premium text + gradient helpers ---------- */
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
+.text-gradient {
+  @apply inline-block bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Instead of forcing white text (often fails contrast), we keep it theme-aware */
-.gradient-bg {
-  @apply bg-gradient-to-br from-primary/80 via-secondary/70 to-accent/80 text-foreground;
+.bg-gradient {
+  @apply bg-linear-to-br from-primary/30 via-secondary/30 to-accent/30 text-foreground brightness-110 hover:brightness-125;
 }
 
 /* ---------- Glassmorphism ---------- */
-/* Clean glass container: blur + subtle border + soft highlight */
 .glass-panel {
   background: color-mix(in oklab, var(--card) 70%, transparent);
   border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
@@ -209,7 +300,6 @@
   border-radius: var(--radius-2xl);
 }
 
-/* Slightly stronger glass for cards */
 .glass-card {
   background: color-mix(in oklab, var(--card) 78%, transparent);
   border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
@@ -221,54 +311,20 @@
   border-radius: var(--radius-2xl);
 }
 
-/* ---------- Neumorphism ---------- */
-/* Raised “soft” panel */
-.neo-panel {
-  background: var(--card);
-  border: 1px solid color-mix(in oklab, var(--border) 45%, transparent);
-  box-shadow:
-    10px 10px 22px color-mix(in oklab, var(--crust) 35%, transparent),
-    -10px -10px 22px color-mix(in oklab, white 6%, transparent);
-  border-radius: var(--radius-2xl);
-}
-
-/* Inset surface (great for inputs / inner areas) */
-.neo-inset {
-  background: color-mix(in oklab, var(--card) 92%, var(--mantle));
-  border: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
-  box-shadow:
-    inset 10px 10px 18px color-mix(in oklab, var(--crust) 35%, transparent),
-    inset -10px -10px 18px color-mix(in oklab, white 6%, transparent);
-  border-radius: var(--radius-2xl);
-}
-
-/* ---------- Neumorphic Glass (best combo) ---------- */
-.neo-glass {
-  background: color-mix(in oklab, var(--card) 60%, transparent);
-  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
-  box-shadow:
-    12px 12px 28px color-mix(in oklab, var(--crust) 40%, transparent),
-    -10px -10px 26px color-mix(in oklab, white 7%, transparent),
-    inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border-radius: var(--radius-2xl);
-}
-
-/* ---------- Gradient border (subtle enterprise look) ---------- */
+/* ---------- Gradient border ---------- */
 .gradient-border {
+  @apply rounded-full;
   position: relative;
-  border-radius: var(--radius-2xl);
   background: color-mix(in oklab, var(--card) 70%, transparent);
   overflow: hidden;
 }
 
 .gradient-border::before {
+  @apply rounded-full;
   content: "";
   position: absolute;
   inset: 0;
   padding: 1px;
-  border-radius: var(--radius-2xl);
   background: linear-gradient(
     135deg,
     color-mix(in oklab, var(--primary) 70%, transparent),
@@ -283,7 +339,7 @@
   pointer-events: none;
 }
 
- @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .animate-gradient-x,
   .animate-gradient-y,
   .animate-gradient-xy {
