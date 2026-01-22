@@ -15,8 +15,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FileText, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { friendlyStatus, statusTone } from "@/lib/utils";
+import { FileText, Loader2, MoreVertical, Pencil, Trash2, MessageSquarePlus, ChevronRight } from "lucide-react";
+import { friendlyStatus, statusTone, cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 type Props = Readonly<{
   doc: Document;
@@ -24,10 +25,14 @@ type Props = Readonly<{
   selectionMode: boolean;
   selected: boolean;
   ingesting: boolean;
+  hasChats: boolean;
+  isExpanded: boolean;
   onClick: () => void;
   onToggleSelect: () => void;
+  onToggleExpand: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onCreateChat: () => void;
   draggable: boolean;
   onDragStart: (e: React.DragEvent) => void;
 }>;
@@ -38,19 +43,44 @@ export function DocumentRow({
   selectionMode,
   selected,
   ingesting,
+  hasChats,
+  isExpanded,
   onClick,
   onToggleSelect,
+  onToggleExpand,
   onRename,
   onDelete,
+  onCreateChat,
   draggable,
   onDragStart,
 }: Props) {
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="relative">
+      <Button
+        variant="ghost"
+        size="icon"
+            className={cn(
+                "absolute left-1.5 top-1/2 -translate-y-1/2 z-20 flex h-5 w-5 shrink-0 items-center justify-center rounded-full cursor-pointer text-muted-foreground",
+                !hasChats && "invisible pointer-events-none"
+            )}
+            onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+            }}
+            role="button"
+            aria-label={isExpanded ? "Collapse chats" : "Expand chats"}
+        >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
+        </Button>
+
       <SidebarMenuButton
         isActive={active && !selectionMode}
         onClick={onClick}
-        className={`h-auto py-2 ${selected ? "bg-muted" : ""}`}
+        className={cn(
+            "h-auto py-2 pr-8", 
+            selected ? "bg-muted" : "",
+            hasChats && "pl-7" // Only add padding if there are chats (for the chevron space)
+        )}
         draggable={draggable}
         onDragStart={onDragStart}
         title={doc.name}
@@ -104,6 +134,20 @@ export function DocumentRow({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="glass-card p-1">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onCreateChat();
+              }}
+              className="rounded-full transition-colors hover:bg-accent/10 hover:text-accent focus:bg-accent/10 focus:text-accent"
+            >
+              <MessageSquarePlus
+                className="mr-2 h-3 w-3 text-emerald-500"
+                aria-hidden="true"
+              />
+              Create New Chat
+            </DropdownMenuItem>
+            
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();

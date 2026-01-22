@@ -2,14 +2,16 @@
 
 import * as React from "react";
 import { useTitle, useWindowSize } from "react-use";
-import { DocumentPanel } from "@/components/document-panel";
+import { DocumentPanel, type DocumentPanelHandle } from "@/components/document-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { Toaster } from "@/components/ui/sonner";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import type { Document, Folder } from "@/lib/api";
+import type { Document, Folder, ChatThread } from "@/lib/api";
+import { updateChat } from "@/lib/api";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { toast } from "sonner";
 
 export default function Home() {
   const [selectedDocument, setSelectedDocument] =
@@ -17,6 +19,42 @@ export default function Home() {
   const [selectedFolder, setSelectedFolder] = React.useState<Folder | null>(
     null,
   );
+  const [selectedChat, setSelectedChat] = React.useState<ChatThread | null>(null);
+  const sidebarRef = React.useRef<DocumentPanelHandle>(null);
+
+  const handleSelectDocument = (doc: Document | null) => {
+      setSelectedDocument(doc);
+      if (doc) {
+          setSelectedChat(null);
+      }
+  };
+
+  const handleSelectFolder = (folder: Folder | null) => {
+      setSelectedFolder(folder);
+      if (folder) {
+          setSelectedDocument(null);
+          setSelectedChat(null);
+      }
+  };
+
+  const handleSelectChat = (chat: ChatThread | null) => {
+      setSelectedChat(chat);
+      if (chat) {
+          setSelectedDocument(null);
+      }
+  };
+
+  const handleChatRename = async (newTitle: string) => {
+      if (!selectedChat) return;
+      try {
+          const updated = await updateChat(selectedChat.id, newTitle);
+          setSelectedChat(updated);
+          sidebarRef.current?.refresh();
+          toast.success("Chat renamed");
+      } catch (e) {
+          toast.error("Failed to rename chat");
+      }
+  };
 
   const { width } = useWindowSize();
   const isMobile = width < 768;
@@ -24,9 +62,11 @@ export default function Home() {
   useTitle(
     selectedDocument
       ? `DocuAgent | ${selectedDocument.name}`
-      : selectedFolder
-        ? `DocuAgent | ${selectedFolder.name}`
-        : "DocuAgent | Dashboard",
+      : selectedChat
+        ? `DocuAgent | ${selectedChat.title}`
+        : selectedFolder
+          ? `DocuAgent | ${selectedFolder.name}`
+          : "DocuAgent | Dashboard",
   );
 
   return (
@@ -37,10 +77,13 @@ export default function Home() {
       </div>
 
       <DocumentPanel
+        ref={sidebarRef}
         selectedDocument={selectedDocument}
-        setSelectedDocument={setSelectedDocument}
+        setSelectedDocument={handleSelectDocument}
         selectedFolder={selectedFolder}
-        setSelectedFolder={setSelectedFolder}
+        setSelectedFolder={handleSelectFolder}
+        selectedChat={selectedChat}
+        setSelectedChat={handleSelectChat}
       />
 
       <SidebarInset className="relative flex h-full flex-col overflow-hidden">
@@ -66,9 +109,11 @@ export default function Home() {
           aria-label="AI Chat Interface"
         >
           <ChatPanel
-            key={selectedDocument?.doc_id ?? selectedFolder?.id ?? "empty"}
+            key={selectedDocument?.doc_id ?? selectedFolder?.id ?? selectedChat?.id ?? "empty"}
             selectedDocument={selectedDocument}
             selectedFolder={selectedFolder}
+            selectedChat={selectedChat}
+            onRenameChat={handleChatRename}
           />
         </main>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import ThemeToggle from "@/components/theme-toggle";
-import { HowToUseDialog } from "@/components/how-to-use-dialog";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,10 +9,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-card/30 px-4 backdrop-blur-md">
       <div className="flex items-center gap-3">
-        
           <SidebarTrigger />
-        
-
         <div className="h-6 w-px bg-border/50 mx-1" />
 
         <Link
@@ -42,7 +38,6 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-2">
-        <HowToUseDialog />
         <ThemeToggle />
       </div>
     </header>

@@ -1,4 +1,4 @@
-import type { AgenticResult, Document, Folder } from "./api";
+import type { AgenticResult, Document, Folder, ChatThread } from "./api";
 
 export type MessageStatus = "pending" | "complete" | "error";
 
@@ -12,7 +12,7 @@ export type Message = {
 
 export type PollingEntry = { idx: number };
 
-export type SelectionId = `f-${number}` | `d-${string}`;
+export type SelectionId = `f-${number}` | `d-${string}` | `c-${number}`;
 
 export type IngestJob = {
   docId: string;
@@ -22,5 +22,6 @@ export type IngestJob = {
 export type FilteredItems = {
   folders: Folder[];
   docs: Document[];
+  chats: ChatThread[];
   isSearch: boolean;
 };

@@ -22,7 +22,7 @@ export function SearchBar({ value, onChange, disabled }: Props) {
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search..."
         disabled={disabled}
-        className="pl-8"
+        className="pl-8 rounded-full"
         aria-label="Search documents and folders"
       />
     </div>

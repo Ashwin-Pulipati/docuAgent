@@ -1,22 +1,23 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { SidebarHeader } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { SidebarHeader } from "@/components/ui/sidebar";
+import type { Document, Folder } from "@/lib/api";
 import {
-  RefreshCcw,
-  Trash2,
-  X,
   CheckSquare,
   CornerUpLeft,
   Folder as FolderIcon,
+  MessageSquarePlus,
+  RefreshCcw,
+  Trash2,
+  X,
 } from "lucide-react";
-import type { Document, Folder } from "@/lib/api";
-import { UploadMenu } from "./upload-menu";
-import { SearchBar } from "./search-bar";
+import Image from "next/image";
+import Link from "next/link";
+import * as React from "react";
 import { CreateFolderDialog } from "./create-folder-dialog";
+import { SearchBar } from "./search-bar";
+import { UploadMenu } from "./upload-menu";
 
 type Props = Readonly<{
   selectedFolder: Folder | null;
@@ -42,6 +43,7 @@ type Props = Readonly<{
   newFolderName: string;
   setNewFolderName: (v: string) => void;
   onCreateFolder: () => void;
+  onCreateChat: () => void;
 
   query: string;
   setQuery: (v: string) => void;
@@ -71,6 +73,7 @@ export function PanelHeader({
   newFolderName,
   setNewFolderName,
   onCreateFolder,
+  onCreateChat,
   query,
   setQuery,
   onUploadFiles,
@@ -112,6 +115,20 @@ export function PanelHeader({
             />
           )}
 
+          {!isSelectionMode && selectedFolder && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCreateChat}
+              disabled={busy}
+              className="h-9 w-9 rounded-full"
+              aria-label="Create new folder-level chat"
+              title="Create new folder-level chat"
+            >
+              <MessageSquarePlus className="size-4!" aria-hidden="true" />
+            </Button>
+          )}
+
           {isSelectionMode ? (
             <>
               <Button
@@ -143,11 +160,11 @@ export function PanelHeader({
               size="icon"
               onClick={onEnterSelectionMode}
               disabled={busy || !canEnterSelectionMode}
-              className="h-8 w-8 rounded-full"
+              className="h-9 w-9rounded-full"
               title="Select Multiple Files or Folders"
               aria-label="Enter selection mode"
             >
-              <CheckSquare className="h-4 w-4" aria-hidden="true" />
+              <CheckSquare className="size-4!" aria-hidden="true" />
             </Button>
           )}
 
@@ -158,12 +175,12 @@ export function PanelHeader({
                 size="icon"
                 onClick={onRefresh}
                 disabled={busy}
-                className="h-8 w-8 rounded-full"
+                className="h-9 w-9rounded-full"
                 aria-label="Refresh documents list"
                 title="Refresh list"
               >
                 <RefreshCcw
-                  className={`h-4 w-4 ${busy ? "animate-spin" : ""}`}
+                  className={`size-4! ${busy ? "animate-spin" : ""}`}
                   aria-hidden="true"
                 />
               </Button>
@@ -178,18 +195,18 @@ export function PanelHeader({
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         {selectedFolder && (
           <div className="flex shrink-0 gap-1">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBackRoot}
-              className="h-8 w-8 rounded-full"
+              className="h-9 w-9 rounded-full"
               title="Back to Root (Drop here to move to Root)"
               aria-label="Go back to root folder"
             >
-              <CornerUpLeft className="h-4 w-4" aria-hidden="true" />
+              <CornerUpLeft className="size-5!" aria-hidden="true" />
             </Button>
 
             {selectedDocument && (
@@ -197,11 +214,11 @@ export function PanelHeader({
                 variant="ghost"
                 size="icon"
                 onClick={onSelectFolderContext}
-                className="h-8 w-8 rounded-full text-primary"
+                className="h-9 w-9 rounded-full text-primary"
                 title="Select Folder (Chat with entire folder)"
                 aria-label="Deselect document to chat with folder"
               >
-                <FolderIcon className="h-4 w-4" aria-hidden="true" />
+                <FolderIcon className="size-4!" aria-hidden="true" />
               </Button>
             )}
           </div>

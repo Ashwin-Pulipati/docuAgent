@@ -1,27 +1,33 @@
 "use client";
 
+import * as React from "react";
+import type { Document, Folder, ChatThread } from "@/lib/api";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Document, Folder } from "@/lib/api";
-import * as React from "react";
-import { useAgenticChat } from "../../hooks/use-agentic-chat";
-import { ChatComposer } from "./chat-composer";
+import { useAgenticChat } from "@/hooks/use-agentic-chat";
 import { ChatHeader } from "./chat-header";
+import { ChatComposer } from "./chat-composer";
 import { EmptyChatState } from "./empty-chat-state";
 import { MessageItem } from "./message-item";
 
 export function ChatPanel({
   selectedDocument,
   selectedFolder,
+  selectedChat,
+  onRenameChat,
 }: {
   readonly selectedDocument: Document | null;
   readonly selectedFolder: Folder | null;
+  readonly selectedChat: ChatThread | null;
+  readonly onRenameChat?: (newTitle: string) => void;
 }) {
   const targetName = selectedDocument
     ? selectedDocument.name
     : selectedFolder
       ? selectedFolder.name
-      : "";
+      : selectedChat
+        ? selectedChat.title
+        : "";
 
   const targetType = selectedDocument ? "document" : "folder";
 
@@ -40,7 +46,7 @@ export function ChatPanel({
     asking,
     checking,
     online,
-  } = useAgenticChat({ selectedDocument, selectedFolder });
+  } = useAgenticChat({ selectedDocument, selectedFolder, selectedChat });
 
   const viewportRef = React.useRef<HTMLDivElement>(null);
 
@@ -52,7 +58,7 @@ export function ChatPanel({
     });
   }, [messages]);
 
-  if (!selectedDocument && !selectedFolder) return <EmptyChatState />;
+  if (!selectedDocument && !selectedFolder && !selectedChat) return <EmptyChatState />;
 
   const disabled = !canAsk || asking || checking || !online || isGenerating;
   const placeholder = canAsk
@@ -65,6 +71,7 @@ export function ChatPanel({
         selectedDocument={selectedDocument}
         selectedFolder={selectedFolder}
         targetName={targetName}
+        onRename={selectedChat ? onRenameChat : undefined}
       />
 
       <CardContent className="relative flex-1 overflow-hidden p-0">

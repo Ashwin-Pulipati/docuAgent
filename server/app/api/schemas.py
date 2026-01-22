@@ -34,6 +34,7 @@ class QueryRequest(BaseModel):
     top_k: int = Field(default=6, ge=1, le=20)
     doc_id: Optional[str] = None 
     folder_id: Optional[int] = None
+    thread_id: Optional[int] = None # Optional for stateless queries, required for threaded
 
 
 class QueryResponse(BaseModel):
@@ -62,3 +63,33 @@ class AgenticResult(BaseModel):
     needs_clarification: bool = False
     clarifying_question: Optional[str] = None
     num_contexts: int = 0
+
+
+class ChatThreadCreate(BaseModel):
+    title: Optional[str] = "New Chat"
+    folder_id: Optional[int] = None
+    document_id: Optional[int] = None
+    parent_id: Optional[int] = None
+
+
+class ChatThreadUpdate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    role: str
+    content: str
+    citations: Optional[List[Citation]] = None
+    created_at: str
+
+
+class ChatThreadResponse(BaseModel):
+    id: int
+    title: str
+    folder_id: Optional[int]
+    document_id: Optional[int]
+    parent_id: Optional[int]
+    created_at: str
+    updated_at: str
+    messages: List[ChatMessageResponse] = []

@@ -12,7 +12,7 @@ from app.services.storage import LocalStorage
 from app.services.jobs_client import InngestJobsClient
 from app.services.db import engine
 from app.services.models import Document, Folder
-from app.services.repositories import DocumentRepo, FolderRepo
+from app.services.repositories import DocumentRepo, FolderRepo, ChatRepo
 from app.services.vector_store import QdrantVectorStore
 from app.api.schemas import (
     UploadResponse, 
@@ -22,7 +22,11 @@ from app.api.schemas import (
     FolderCreate,
     FolderUpdate,
     FolderResponse,
-    UpdateDocumentRequest
+    UpdateDocumentRequest,
+    ChatThreadCreate,
+    ChatThreadUpdate,
+    ChatThreadResponse,
+    ChatMessageResponse
 )
 
 router = APIRouter()
@@ -198,6 +202,12 @@ def delete_document(doc_id: str):
 
 @router.post("/query", response_model=QueryResponse)
 async def query_agentic(req: QueryRequest):
+    # If thread_id is provided, we save the user message first
+    if req.thread_id:
+        with Session(engine) as session:
+            repo = ChatRepo(session)
+            repo.add_message(req.thread_id, "user", req.question)
+
     client = get_inngest_client()
     res = await client.send(
         inngest.Event(
@@ -207,6 +217,7 @@ async def query_agentic(req: QueryRequest):
                 "top_k": int(req.top_k),
                 "doc_id": req.doc_id,
                 "folder_id": req.folder_id,
+                "thread_id": req.thread_id,
             },
         )
     )
@@ -229,6 +240,7 @@ def list_documents():
         docs = session.exec(stmt).all()
         return [
             {
+                "id": d.id,
                 "doc_id": d.doc_id, 
                 "name": d.source_filename, 
                 "status": d.status, 
@@ -237,3 +249,96 @@ def list_documents():
             }
             for d in docs
         ]
+
+# --- Chat Endpoints ---
+
+@router.post("/chats", response_model=ChatThreadResponse)
+def create_chat(req: ChatThreadCreate):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        thread = repo.create_thread(req.title or "New Chat", req.folder_id, req.document_id, req.parent_id)
+        return ChatThreadResponse(
+            id=thread.id,
+            title=thread.title,
+            folder_id=thread.folder_id,
+            document_id=thread.document_id,
+            parent_id=thread.parent_id,
+            created_at=str(thread.created_at),
+            updated_at=str(thread.updated_at),
+            messages=[]
+        )
+
+@router.get("/chats", response_model=List[ChatThreadResponse])
+def list_chats(folder_id: Optional[int] = None, document_id: Optional[int] = None):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        threads = repo.list_threads(folder_id, document_id)
+        return [
+            ChatThreadResponse(
+                id=t.id,
+                title=t.title,
+                folder_id=t.folder_id,
+                document_id=t.document_id,
+                parent_id=t.parent_id,
+                created_at=str(t.created_at),
+                updated_at=str(t.updated_at),
+                messages=[] # Don't load messages on list for perf
+            )
+            for t in threads
+        ]
+
+@router.get("/chats/{thread_id}", response_model=ChatThreadResponse)
+def get_chat(thread_id: int):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        thread = repo.get_thread(thread_id)
+        if not thread:
+            raise HTTPException(status_code=404, detail="Chat not found")
+        
+        # Sort messages by creation time
+        msgs = sorted(thread.messages, key=lambda m: m.created_at)
+        
+        return ChatThreadResponse(
+            id=thread.id,
+            title=thread.title,
+            folder_id=thread.folder_id,
+            document_id=thread.document_id,
+            parent_id=thread.parent_id,
+            created_at=str(thread.created_at),
+            updated_at=str(thread.updated_at),
+            messages=[
+                ChatMessageResponse(
+                    id=m.id,
+                    role=m.role,
+                    content=m.content,
+                    citations=m.citations,
+                    created_at=str(m.created_at)
+                ) for m in msgs
+            ]
+        )
+
+@router.patch("/chats/{thread_id}", response_model=ChatThreadResponse)
+def update_chat(thread_id: int, req: ChatThreadUpdate):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        thread = repo.update_thread(thread_id, req.title)
+        if not thread:
+            raise HTTPException(status_code=404, detail="Chat not found")
+        
+        return ChatThreadResponse(
+            id=thread.id,
+            title=thread.title,
+            folder_id=thread.folder_id,
+            document_id=thread.document_id,
+            parent_id=thread.parent_id,
+            created_at=str(thread.created_at),
+            updated_at=str(thread.updated_at),
+            messages=[]
+        )
+
+@router.delete("/chats/{thread_id}")
+def delete_chat(thread_id: int):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        repo.delete_thread(thread_id)
+    return {"ok": True}

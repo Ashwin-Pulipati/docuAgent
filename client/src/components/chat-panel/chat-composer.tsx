@@ -28,7 +28,7 @@ export function ChatComposer({
   placeholder,
 }: Props) {
   return (
-    <div className="flex w-full items-center gap-2 rounded-2xl border border-border/50 bg-background/40 px-2 py-2 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-ring">
+    <div className="flex w-full items-center gap-2 border border-border/50 bg-background/40 px-2 py-2 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-ring rounded-full">
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -37,7 +37,7 @@ export function ChatComposer({
         }}
         placeholder={placeholder}
         disabled={disabled}
-        className="border-none bg-transparent px-4 shadow-none focus-visible:ring-0"
+        className="border-none bg-transparent px-4 shadow-none focus-visible:ring-0 rounded-full"
         aria-disabled={disabled}
         aria-label="Chat input"
       />
