@@ -221,16 +221,21 @@ export function DocumentPanel({
         }
       }
 
+      const uploadPromise = uploadDocuments(files, selectedFolderId ?? undefined, folderName);
+
+      toast.promise(uploadPromise, {
+        loading: `Uploading and processing ${files.length} file(s)...`,
+        success: (results) => {
+          const createdCount = results.filter((r) => r.created_new).length;
+          return createdCount > 0 
+            ? "Files uploaded successfully! Processing started." 
+            : "Upload complete.";
+        },
+        error: (e) => e instanceof Error ? e.message : "Upload failed",
+      });
+
       try {
-        const results = await uploadDocuments(files, selectedFolderId ?? undefined, folderName);
-        const createdCount = results.filter((r) => r.created_new).length;
-
-        toast.success(
-          createdCount > 0
-            ? `Uploaded ${files.length} file(s). Processing started…`
-            : "Files uploaded (duplicates handling may vary).",
-        );
-
+        const results = await uploadPromise;
         await refresh();
 
         results.forEach((res) => {
@@ -241,7 +246,7 @@ export function DocumentPanel({
           }
         });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Upload failed");
+        // Error is handled by toast.promise
       }
     },
     [refresh, docs, selectedFolderId],

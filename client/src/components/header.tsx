@@ -1,6 +1,7 @@
 "use client";
 
 import ThemeToggle from "@/components/theme-toggle";
+import { HowToUseDialog } from "@/components/how-to-use-dialog";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,7 +41,8 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <HowToUseDialog />
         <ThemeToggle />
       </div>
     </header>
