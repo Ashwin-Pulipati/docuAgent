@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import uuid
+import datetime as dt
 from typing import Optional, Tuple, List
 
 from sqlmodel import Session, select, desc, col
 
-from app.services.models import Document, Folder
+from app.services.models import Document, Folder, ChatThread, ChatMessage
 
 
 class FolderRepo:
@@ -128,3 +129,67 @@ class DocumentRepo:
             self.session.delete(doc)
             self.session.commit()
         return doc
+
+
+class ChatRepo:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def create_thread(self, title: str, folder_id: Optional[int] = None, document_id: Optional[int] = None, parent_id: Optional[int] = None) -> ChatThread:
+        thread = ChatThread(title=title, folder_id=folder_id, document_id=document_id, parent_id=parent_id)
+        self.session.add(thread)
+        self.session.commit()
+        self.session.refresh(thread)
+        return thread
+
+    def get_thread(self, thread_id: int) -> Optional[ChatThread]:
+        return self.session.get(ChatThread, thread_id)
+
+    def list_threads(self, folder_id: Optional[int] = None, document_id: Optional[int] = None) -> List[ChatThread]:
+        stmt = select(ChatThread)
+        
+        if folder_id is not None:
+            stmt = stmt.where(ChatThread.folder_id == folder_id)
+        elif document_id is not None:
+             stmt = stmt.where(ChatThread.document_id == document_id)
+        else:
+            # Root threads (folder_id is NULL) - this includes independent root chats AND chats attached to root documents
+            stmt = stmt.where(ChatThread.folder_id == None)
+            
+        # We return all threads matching the context, frontend builds the tree using parent_id
+        stmt = stmt.order_by(desc(ChatThread.updated_at))
+        return self.session.exec(stmt).all()
+
+    def update_thread(self, thread_id: int, title: str) -> Optional[ChatThread]:
+        thread = self.get_thread(thread_id)
+        if thread:
+            thread.title = title
+            thread.updated_at = dt.datetime.now(dt.timezone.utc)
+            self.session.add(thread)
+            self.session.commit()
+            self.session.refresh(thread)
+        return thread
+
+    def delete_thread(self, thread_id: int) -> None:
+        thread = self.get_thread(thread_id)
+        if thread:
+            self.session.delete(thread)
+            self.session.commit()
+
+    def add_message(self, thread_id: int, role: str, content: str, citations: Optional[List[dict]] = None) -> ChatMessage:
+        msg = ChatMessage(thread_id=thread_id, role=role, content=content, citations=citations)
+        self.session.add(msg)
+        
+        # Update thread updated_at
+        thread = self.get_thread(thread_id)
+        if thread:
+            thread.updated_at = dt.datetime.now(dt.timezone.utc)
+            self.session.add(thread)
+            
+        self.session.commit()
+        self.session.refresh(msg)
+        return msg
+
+    def get_messages(self, thread_id: int) -> List[ChatMessage]:
+        stmt = select(ChatMessage).where(ChatMessage.thread_id == thread_id).order_by(ChatMessage.created_at)
+        return self.session.exec(stmt).all()

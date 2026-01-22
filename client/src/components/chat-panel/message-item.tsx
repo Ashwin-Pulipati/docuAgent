@@ -48,7 +48,7 @@ export const MessageItem = React.memo(function MessageItem({
           className={cn(
             "rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm",
             "border border-border/50",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring translate-y-6",
             isUser
               ? cn(
                   "rounded-tr-none",
@@ -109,7 +109,7 @@ export const MessageItem = React.memo(function MessageItem({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10"
+                className="h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10 translate-y-1/2"
                 onClick={onEdit}
                 aria-label="Edit message"
               >
@@ -121,7 +121,7 @@ export const MessageItem = React.memo(function MessageItem({
               variant="ghost"
               size="icon"
               className={cn(
-                "h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10",
+                "h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10 translate-y-1/2",
                 isCopied && "text-primary",
               )}
               onClick={onCopy}

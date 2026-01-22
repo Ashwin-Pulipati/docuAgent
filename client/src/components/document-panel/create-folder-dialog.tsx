@@ -12,12 +12,12 @@ import { Label } from "@/components/ui/label";
 import { FolderPlus } from "lucide-react";
 
 interface CreateFolderDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  newFolderName: string;
-  onNameChange: (value: string) => void;
-  onCreate: () => void;
-  disabled?: boolean;
+  readonly isOpen: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly newFolderName: string;
+  readonly onNameChange: (value: string) => void;
+  readonly onCreate: () => void;
+  readonly disabled?: boolean;
 }
 
 export function CreateFolderDialog({
@@ -34,12 +34,12 @@ export function CreateFolderDialog({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-full"
+          className="h-9 w-9rounded-full"
           disabled={disabled}
           aria-label="Create new folder"
           title="Create new folder"
         >
-          <FolderPlus className="h-4 w-4" aria-hidden="true" />
+          <FolderPlus className="size-4.5!" aria-hidden="true" />
         </Button>
       </DialogTrigger>
       <DialogContent className="glass-card">

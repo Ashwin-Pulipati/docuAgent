@@ -1,7 +1,7 @@
 "use client";
 
-import type { Document, Folder } from "@/lib/api";
-import { getJobStatus, postQuery } from "@/lib/api";
+import type { Document, Folder, ChatThread } from "@/lib/api";
+import { getJobStatus, postQuery, getChat } from "@/lib/api";
 import * as React from "react";
 import {
   useAsyncFn,
@@ -23,6 +23,7 @@ import type { Message, PollingEntry } from "../lib/types";
 type Args = Readonly<{
   selectedDocument: Document | null;
   selectedFolder: Folder | null;
+  selectedChat: ChatThread | null;
 }>;
 
 type Return = Readonly<{
@@ -53,6 +54,7 @@ type Return = Readonly<{
 export function useAgenticChat({
   selectedDocument,
   selectedFolder,
+  selectedChat,
 }: Args): Return {
   const online = true;
 
@@ -60,9 +62,11 @@ export function useAgenticChat({
     ? selectedDocument.name
     : selectedFolder
       ? selectedFolder.name
-      : null;
+      : selectedChat
+        ? selectedChat.title
+        : null;
 
-  const targetType = selectedDocument ? "document" : "folder";
+  const targetType = selectedDocument ? "document" : selectedFolder ? "folder" : "chat";
 
   const canAsk = React.useMemo(() => {
     if (!online) return false;
@@ -70,13 +74,14 @@ export function useAgenticChat({
       const s = normalizeStatus(selectedDocument.status);
       return s === "ingested" || s === "completed";
     }
-    return Boolean(selectedFolder);
-  }, [selectedDocument, selectedFolder, online]);
+    if (selectedFolder) return true;
+    return Boolean(selectedChat);
+  }, [selectedDocument, selectedFolder, selectedChat, online]);
 
   const contextKey = React.useMemo(() => {
-    const id = selectedDocument?.doc_id ?? selectedFolder?.id ?? "none";
+    const id = selectedDocument?.doc_id ?? selectedFolder?.id ?? selectedChat?.id ?? "none";
     return `docuagent:draft:${targetType}:${id}`;
-  }, [selectedDocument?.doc_id, selectedFolder?.id, targetType]);
+  }, [selectedDocument?.doc_id, selectedFolder?.id, selectedChat?.id, targetType]);
 
   const [draft, setDraft, removeDraft] = useLocalStorage<string>(
     contextKey,
@@ -100,17 +105,45 @@ export function useAgenticChat({
   } = list;
 
   const initialized = React.useRef(false);
+  
+  React.useEffect(() => {
+      if (selectedChat) {
+          getChat(selectedChat.id).then(chat => {
+              const history: Message[] = chat.messages.map(m => ({
+                  id: m.id.toString(),
+                  sender: m.role as "user" | "agent",
+                  text: m.content,
+                  result: m.citations ? { 
+                      citations: m.citations, 
+                      answer: m.content, 
+                      intent: "qa", 
+                      needs_clarification: false,
+                      sources: [],
+                      num_contexts: 0
+                  } : undefined,
+                  status: "complete"
+              }));
+              setMessages(history);
+              initialized.current = true;
+          }).catch(() => {
+              toast.error("Failed to load chat history");
+          });
+      } 
+  }, [selectedChat, setMessages]);
 
   React.useEffect(() => {
     if (!targetName) return;
+    
+    if (selectedChat) return; 
+
     initialized.current = false;
     setMessages([]);
-  }, [targetName, setMessages]);
+  }, [targetName, setMessages, selectedChat]);
 
   React.useEffect(() => {
     if (!targetName) return;
     if (initialized.current) return;
-
+    if (selectedChat) return;
     pushMessage({
       id: `welcome-${Date.now()}`,
       sender: "agent",
@@ -118,7 +151,7 @@ export function useAgenticChat({
       status: "complete",
     });
     initialized.current = true;
-  }, [targetName, targetType, pushMessage]);
+  }, [targetName, targetType, pushMessage, selectedChat]);
 
   const [{ value: copiedValue }, copyToClipboard] = useCopyToClipboard();
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
@@ -182,7 +215,7 @@ export function useAgenticChat({
   );
 
   const [{ loading: asking }, submit] = useAsyncFn(async () => {
-    if (!selectedDocument && !selectedFolder) return;
+    if (!selectedDocument && !selectedFolder && !selectedChat) return;
     if (!inputValue.trim()) return;
 
     if (!online) {
@@ -216,7 +249,8 @@ export function useAgenticChat({
         userText,
         selectedDocument?.doc_id ?? null,
         6,
-        selectedFolder?.id ?? null,
+        selectedFolder?.id ?? selectedChat?.folder_id ?? null, // Use chat's folder context if available
+        selectedChat?.id ?? null // Pass thread_id
       );
 
       const pending = messages[agentIdx];
@@ -254,6 +288,7 @@ export function useAgenticChat({
     inputValue,
     selectedDocument,
     selectedFolder,
+    selectedChat,
     online,
     pushMessage,
     messages,

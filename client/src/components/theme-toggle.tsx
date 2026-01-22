@@ -1,8 +1,8 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useMemo, useState } from "react";
-import { useTheme } from "next-themes";
 import { Monitor, Moon, Palette, Sun, type LucideIcon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 const THEME_OPTIONS = [
@@ -137,7 +137,7 @@ export default function ThemeToggle() {
                 className={cn(
                   "group cursor-pointer rounded-md transition-colors",
                   active
-                    ? "bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground"
+                    ? "bg-primary/10 text-primary focus:bg-primary focus:text-primary"
                     : "bg-transparent text-foreground hover:bg-accent/10 hover:text-accent focus:bg-accent/10 focus:text-accent",
                 )}
               >

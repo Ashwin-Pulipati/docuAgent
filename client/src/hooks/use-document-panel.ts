@@ -4,7 +4,7 @@ import * as React from "react";
 import { useAsyncFn, useInterval, useSet, useToggle } from "react-use";
 import { toast } from "sonner";
 
-import type { Document, Folder } from "@/lib/api";
+import type { Document, Folder, ChatThread } from "@/lib/api";
 import {
   createFolder,
   deleteDocument,
@@ -15,6 +15,10 @@ import {
   updateDocument,
   updateFolder,
   uploadDocuments,
+  listChats,
+  createChat,
+  updateChat,
+  deleteChat,
 } from "@/lib/api";
 
 import type { FilteredItems, IngestJob, SelectionId } from "@/lib/types";
@@ -30,6 +34,7 @@ type Args = Readonly<{
 type Return = Readonly<{
   docs: Document[];
   folders: Folder[];
+  chats: ChatThread[];
   query: string;
   setQuery: (v: string) => void;
 
@@ -70,10 +75,13 @@ type Return = Readonly<{
   setEditingDoc: (d: Document | null) => void;
   editingFolder: Folder | null;
   setEditingFolder: (f: Folder | null) => void;
+  editingChat: ChatThread | null;
+  setEditingChat: (c: ChatThread | null) => void;
   renameValue: string;
   setRenameValue: (v: string) => void;
   renameDoc: () => void;
   renameFolder: () => void;
+  renameChat: () => void;
 
   deleteFolderById: (id: number) => void;
   deleteDocById: (docId: string) => void;
@@ -87,15 +95,20 @@ type Return = Readonly<{
   handleDropOnFolder: (e: React.DragEvent, folderId: number) => void;
   handleDropOnRoot: (e: React.DragEvent) => void;
   handleDragOver: (e: React.DragEvent) => void;
+
+  createChatThread: (docId?: number, parentId?: number, folderId?: number) => Promise<void>;
+  deleteChatThread: (id: number) => Promise<void>;
 }>;
 
 export function useDocumentPanel({
   selectedDocument,
   setSelectedDocument,
   selectedFolder,
+  setSelectedFolder,
 }: Args): Return {
   const [docs, setDocs] = React.useState<Document[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
+  const [chats, setChats] = React.useState<ChatThread[]>([]);
   const [query, setQuery] = React.useState("");
 
   const [ingestJobs, setIngestJobs] = React.useState<Map<string, IngestJob>>(
@@ -107,6 +120,7 @@ export function useDocumentPanel({
 
   const [editingDoc, setEditingDoc] = React.useState<Document | null>(null);
   const [editingFolder, setEditingFolder] = React.useState<Folder | null>(null);
+  const [editingChat, setEditingChat] = React.useState<ChatThread | null>(null);
   const [renameValue, setRenameValue] = React.useState("");
 
   const [isDraggingFile, setIsDraggingFile] = React.useState(false);
@@ -122,9 +136,14 @@ export function useDocumentPanel({
   const selectedFolderId = selectedFolder?.id ?? null;
 
   const [{ loading: loadingData }, refreshFn] = useAsyncFn(async () => {
-    const [d, f] = await Promise.all([listDocuments(), listFolders()]);
+    const [d, f, c] = await Promise.all([
+        listDocuments(), 
+        listFolders(), 
+        listChats(selectedFolderId ?? undefined)
+    ]);
     setDocs(d);
     setFolders(f);
+    setChats(c);
 
     if (selectedDocument) {
       const updated =
@@ -132,11 +151,15 @@ export function useDocumentPanel({
       if (updated && updated.status !== selectedDocument.status)
         setSelectedDocument(updated);
     }
-  }, [selectedDocument, setSelectedDocument]);
+  }, [selectedDocument, setSelectedDocument, selectedFolderId]);
 
   React.useEffect(() => {
     void refreshFn();
   }, [refreshFn]);
+
+  React.useEffect(() => {
+      setChats([]);
+  }, [selectedFolderId]);
 
   React.useEffect(() => {
     reset();
@@ -149,6 +172,7 @@ export function useDocumentPanel({
       return {
         folders: [],
         docs: docs.filter((d) => d.name.toLowerCase().includes(q)),
+        chats: chats.filter((c) => c.title.toLowerCase().includes(q)),
         isSearch: true,
       };
     }
@@ -159,9 +183,10 @@ export function useDocumentPanel({
         : d.folder_id === null,
     );
     const relevantFolders = selectedFolderId ? [] : folders;
-
-    return { folders: relevantFolders, docs: relevantDocs, isSearch: false };
-  }, [docs, folders, query, selectedFolderId]);
+    
+    
+    return { folders: relevantFolders, docs: relevantDocs, chats: chats, isSearch: false };
+  }, [docs, folders, chats, query, selectedFolderId]);
 
   const toggleSelection = React.useCallback(
     (id: SelectionId) => {
@@ -403,6 +428,7 @@ export function useDocumentPanel({
         if (id.startsWith("f-"))
           await deleteFolder(Number.parseInt(id.substring(2)));
         else if (id.startsWith("d-")) await deleteDocument(id.substring(2));
+        else if (id.startsWith("c-")) await deleteChat(Number.parseInt(id.substring(2)));
       } catch {
         failed++;
       }
@@ -450,10 +476,10 @@ export function useDocumentPanel({
   );
 
   const handleDropOnRoot = React.useCallback(
-    (e: React.DragEvent) => {
+    (e: React.DragEvent, docId: string) => { 
       e.preventDefault();
-      const docId = e.dataTransfer.getData("docId");
-      if (docId) void handleMoveDoc(docId, null);
+      const droppedDocId = e.dataTransfer.getData("docId");
+      if (droppedDocId) void handleMoveDoc(droppedDocId, null);
     },
     [handleMoveDoc],
   );
@@ -486,11 +512,51 @@ export function useDocumentPanel({
     }
   }, [editingFolder, renameValue, refreshFn]);
 
+  
+  const createChatThread = React.useCallback(async (docId?: number, parentId?: number, folderId?: number) => {
+      try {
+          const finalFolderId = folderId ?? (docId 
+            ? docs.find(d => d.id === docId)?.folder_id ?? undefined 
+            : selectedFolderId ?? undefined
+          );
+          
+          await createChat("New Chat", finalFolderId, docId, parentId);
+          await refreshFn();
+          toast.success("New chat created");
+      } catch {
+          toast.error("Failed to create chat");
+      }
+  }, [selectedFolderId, docs, refreshFn]);
+
+  const renameChat = React.useCallback(async () => {
+      if (!editingChat || !renameValue.trim()) return;
+      try {
+          await updateChat(editingChat.id, renameValue);
+          setEditingChat(null);
+          await refreshFn();
+          toast.success("Chat renamed");
+      } catch {
+          toast.error("Failed to rename chat");
+      }
+  }, [editingChat, renameValue, refreshFn]);
+
+  const deleteChatThread = React.useCallback(async (id: number) => {
+      if (!confirm("Delete this chat?")) return;
+      try {
+          await deleteChat(id);
+          await refreshFn();
+          toast.success("Chat deleted");
+      } catch {
+          toast.error("Failed to delete chat");
+      }
+  }, [refreshFn]);
+
   const busy = uploading || loadingData || pollingIngest;
 
   return {
     docs,
     folders,
+    chats,
     query,
     setQuery,
     isSelectionMode,
@@ -517,10 +583,13 @@ export function useDocumentPanel({
     setEditingDoc,
     editingFolder,
     setEditingFolder,
+    editingChat,
+    setEditingChat,
     renameValue,
     setRenameValue,
     renameDoc: () => void renameDoc(),
     renameFolder: () => void renameFolder(),
+    renameChat: () => void renameChat(),
     deleteFolderById: (id) => void deleteFolderById(id),
     deleteDocById: (id) => void deleteDocById(id),
     bulkDelete: () => void bulkDelete(),
@@ -529,7 +598,9 @@ export function useDocumentPanel({
     handleMoveDoc: (docId, folderId) => void handleMoveDoc(docId, folderId),
     handleDragStartDoc,
     handleDropOnFolder,
-    handleDropOnRoot,
+    handleDropOnRoot: (e: React.DragEvent) => handleDropOnRoot(e, ""), 
     handleDragOver,
+    createChatThread,
+    deleteChatThread,
   };
 }

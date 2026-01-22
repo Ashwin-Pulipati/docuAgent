@@ -15,7 +15,7 @@ from app.workflows.inngest_app import get_inngest_client
 from app.services.embeddings import OpenAIEmbedder
 from app.services.vector_store import QdrantVectorStore
 from app.services.db import engine
-from app.services.repositories import DocumentRepo
+from app.services.repositories import DocumentRepo, ChatRepo
 from app.api.schemas import Citation
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,7 @@ async def agent_query(ctx: inngest.Context):
     top_k = int(str(ctx.event.data.get("top_k", settings.default_top_k)))
     doc_id: Optional[str] = ctx.event.data.get("doc_id")
     folder_id: Optional[int] = ctx.event.data.get("folder_id")
+    thread_id: Optional[int] = ctx.event.data.get("thread_id")
 
     async def _retrieve():
         target_doc_ids: Optional[list[str]] = None
@@ -103,6 +104,9 @@ async def agent_query(ctx: inngest.Context):
             ),
             num_contexts=0,
         )
+        if thread_id:
+             with Session(engine) as session:
+                ChatRepo(session).add_message(thread_id, "agent", out.clarifying_question)
         return out.model_dump()
 
     sources = sorted({c["source"] for c in retrieved if c.get("source")})
@@ -133,7 +137,7 @@ Return ONLY JSON:
             "temperature": 0,
             "max_tokens": 200,
             "messages": [
-                {"role": "system", "content": "Return only JSON."},
+                {"role": "system", "content": "Return only JSON."}, 
                 {"role": "user", "content": classify_prompt},
             ],
         },
@@ -149,14 +153,17 @@ Return ONLY JSON:
 
     intent = intent_obj.get("intent") or "qa"
     if intent == "clarify":
+        clarifying_q = intent_obj.get("clarifying_question") or "What exactly do you want (answer vs summarize vs extract) and which PDF does it refer to?"
         out = AgenticRAGResult(
             intent="clarify",
             needs_clarification=True,
-            clarifying_question=intent_obj.get("clarifying_question")
-            or "What exactly do you want (answer vs summarize vs extract) and which PDF does it refer to?",
+            clarifying_question=clarifying_q,
             sources=sources,
             num_contexts=len(retrieved),
         )
+        if thread_id:
+             with Session(engine) as session:
+                ChatRepo(session).add_message(thread_id, "agent", clarifying_q)
         return out.model_dump()
 
     gen_prompt = f"""
@@ -184,7 +191,7 @@ Return ONLY JSON with:
             "temperature": 0.2,
             "max_tokens": 900,
             "messages": [
-                {"role": "system", "content": "Return only JSON. No markdown."},
+                {"role": "system", "content": "Return only JSON. No markdown."}, 
                 {"role": "user", "content": gen_prompt},
             ],
         },
@@ -207,4 +214,12 @@ Return ONLY JSON with:
         sources=sources,
         num_contexts=len(retrieved),
     )
+    
+    if thread_id:
+        with Session(engine) as session:
+            final_content = out.clarifying_question if out.needs_clarification else out.answer
+            # Ensure citations are serializable (convert Pydantic models to dicts if needed, but schema expects dicts)
+            citations_data = [c.dict() if hasattr(c, "dict") else c for c in out.citations]
+            ChatRepo(session).add_message(thread_id, "agent", final_content, citations=citations_data)
+
     return out.model_dump()

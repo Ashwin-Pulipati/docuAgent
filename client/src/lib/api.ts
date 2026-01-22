@@ -8,6 +8,7 @@ export const FolderSchema = z.object({
 export type Folder = z.infer<typeof FolderSchema>;
 
 export const DocumentSchema = z.object({
+  id: z.number().optional(),
   doc_id: z.string(),
   name: z.string(),
   status: z.string(),
@@ -22,21 +23,18 @@ export const UploadResponseSchema = z.object({
 });
 export type UploadResponse = z.infer<typeof UploadResponseSchema>;
 
+export const CitationSchema = z.object({
+  chunk_id: z.string(),
+  source: z.string(),
+  quote: z.string().optional().default(""),
+  page_number: z.number().nullable().optional(),
+});
+export type Citation = z.infer<typeof CitationSchema>;
+
 export const AgenticResultSchema = z.object({
-// ... (keep as is)
   intent: z.enum(["qa", "summarize", "extract", "clarify"]),
   answer: z.string().optional().default(""),
-  citations: z
-    .array(
-      z.object({
-        chunk_id: z.string(),
-        source: z.string(),
-        quote: z.string().optional().default(""),
-        page_number: z.number().nullable().optional(),
-      }),
-    )
-    .optional()
-    .default([]),
+  citations: z.array(CitationSchema).optional().default([]),
   sources: z.array(z.string()).optional().default([]),
   needs_clarification: z.boolean().optional().default(false),
   clarifying_question: z.string().nullable().optional(),
@@ -56,6 +54,29 @@ export const QueryResponseSchema = z.object({
   query_event_id: z.string(),
 });
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
+
+// --- Chat Schemas ---
+
+export const ChatMessageSchema = z.object({
+  id: z.number(),
+  role: z.string(),
+  content: z.string(),
+  citations: z.array(CitationSchema).nullable().optional(),
+  created_at: z.string(),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const ChatThreadSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  folder_id: z.number().nullable().optional(),
+  document_id: z.number().nullable().optional(),
+  parent_id: z.number().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  messages: z.array(ChatMessageSchema).optional().default([]),
+});
+export type ChatThread = z.infer<typeof ChatThreadSchema>;
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:8000";
@@ -165,14 +186,16 @@ export async function postQuery(
   doc_id: string | null,
   top_k = 6,
   folder_id: number | null = null,
+  thread_id: number | null = null,
 ): Promise<QueryResponse> {
-  const payload: { question: string; doc_id?: string | null; top_k?: number; folder_id?: number | null } =
+  const payload: { question: string; doc_id?: string | null; top_k?: number; folder_id?: number | null; thread_id?: number | null } =
     {
       question,
       top_k,
     };
   if (doc_id) payload.doc_id = doc_id;
   if (folder_id) payload.folder_id = folder_id;
+  if (thread_id) payload.thread_id = thread_id;
 
   const res = await fetch(`${API_BASE_URL}/query`, {
     method: "POST",
@@ -197,11 +220,68 @@ export async function postQuery(
 export async function getJobStatus(
   eventId: string,
 ): Promise<JobStatusResponse> {
-// ... (keep as is)
   const res = await fetch(`${API_BASE_URL}/jobs/${eventId}`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch job status");
   const data = await res.json();
   return JobStatusResponseSchema.parse(data);
+}
+
+// --- Chat API Functions ---
+
+export async function listChats(folderId?: number): Promise<ChatThread[]> {
+  const url = new URL(`${API_BASE_URL}/chats`);
+  if (folderId) url.searchParams.append("folder_id", folderId.toString());
+  
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch chats");
+  const data = await res.json();
+  return z.array(ChatThreadSchema).parse(data);
+}
+
+export async function createChat(
+  title?: string, 
+  folderId?: number, 
+  documentId?: number, 
+  parentId?: number
+): Promise<ChatThread> {
+  const res = await fetch(`${API_BASE_URL}/chats`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      title, 
+      folder_id: folderId,
+      document_id: documentId,
+      parent_id: parentId
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to create chat");
+  const data = await res.json();
+  return ChatThreadSchema.parse(data);
+}
+
+export async function getChat(threadId: number): Promise<ChatThread> {
+  const res = await fetch(`${API_BASE_URL}/chats/${threadId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch chat");
+  const data = await res.json();
+  return ChatThreadSchema.parse(data);
+}
+
+export async function updateChat(threadId: number, title: string): Promise<ChatThread> {
+  const res = await fetch(`${API_BASE_URL}/chats/${threadId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error("Failed to update chat");
+  const data = await res.json();
+  return ChatThreadSchema.parse(data);
+}
+
+export async function deleteChat(threadId: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/chats/${threadId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete chat");
 }

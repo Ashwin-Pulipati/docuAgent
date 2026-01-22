@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,12 +22,12 @@ export function UploadMenu({ busy, onUploadFiles, onUploadFolder }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-full bg-gradient md:flex md:items-center md:px-12 px-0"
+          className="h-9 w-9rounded-full bg-gradient md:flex md:items-center md:px-12 px-0"
           disabled={busy}
           aria-label="Upload options"
           title="Upload options"
         >
-          <FileUp className="h-4 w-4" aria-hidden="true" />
+          <FileUp className="size-4!" aria-hidden="true" />
           <span className="hidden md:flex">Upload</span>
         </Button>
       </DropdownMenuTrigger>

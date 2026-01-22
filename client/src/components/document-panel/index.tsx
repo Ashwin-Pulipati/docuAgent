@@ -1,29 +1,37 @@
-"use client";
-
+import React, { forwardRef, useImperativeHandle } from "react";
+import type { Document, Folder, ChatThread } from "@/lib/api";
 import { Input } from "@/components/ui/input";
-import type { Document, Folder } from "@/lib/api";
 
-import { useDocumentPanel } from "../../hooks/use-document-panel";
+import { useDocumentPanel } from "@/hooks/use-document-panel";
+import { PanelShell } from "./panel-shell";
+import { PanelHeader } from "./panel-header";
 import { ItemsList } from "./items-list";
 import { PanelFooter } from "./panel-footer";
-import { PanelHeader } from "./panel-header";
-import { PanelShell } from "./panel-shell";
-import { RenameDocumentDialog, RenameFolderDialog } from "./rename-dialogs";
+import { RenameDocumentDialog, RenameFolderDialog, RenameChatDialog } from "./rename-dialogs";
 
-export function DocumentPanel({
-  selectedDocument,
-  setSelectedDocument,
-  selectedFolder,
-  setSelectedFolder,
-}: {
+export interface DocumentPanelHandle {
+  refresh: () => void;
+}
+
+export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   readonly selectedDocument: Document | null;
   readonly setSelectedDocument: (d: Document | null) => void;
   readonly selectedFolder: Folder | null;
   readonly setSelectedFolder: (f: Folder | null) => void;
-}) {
+  readonly selectedChat: ChatThread | null;
+  readonly setSelectedChat: (c: ChatThread | null) => void;
+}>(function DocumentPanel({
+  selectedDocument,
+  setSelectedDocument,
+  selectedFolder,
+  setSelectedFolder,
+  selectedChat,
+  setSelectedChat,
+}, ref) {
   const {
     docs,
     folders,
+    chats,
     query,
     setQuery,
 
@@ -56,10 +64,13 @@ export function DocumentPanel({
     setEditingDoc,
     editingFolder,
     setEditingFolder,
+    editingChat,
+    setEditingChat,
     renameValue,
     setRenameValue,
     renameDoc,
     renameFolder,
+    renameChat,
 
     deleteFolderById,
     deleteDocById,
@@ -71,12 +82,19 @@ export function DocumentPanel({
     handleDragStartDoc,
     handleDropOnFolder,
     handleDragOver,
+
+    createChatThread,
+    deleteChatThread,
   } = useDocumentPanel({
     selectedDocument,
     setSelectedDocument,
     selectedFolder,
     setSelectedFolder,
   });
+
+  useImperativeHandle(ref, () => ({
+    refresh,
+  }));
 
   return (
     <PanelShell
@@ -90,7 +108,7 @@ export function DocumentPanel({
         busy={busy}
         isSelectionMode={isSelectionMode}
         canEnterSelectionMode={
-          filtered.docs.length > 0 || filtered.folders.length > 0
+          filtered.docs.length > 0 || filtered.folders.length > 0 || filtered.chats.length > 0
         }
         selectedCount={selectedIds.size}
         onBackRoot={() => setSelectedFolder(null)}
@@ -104,6 +122,7 @@ export function DocumentPanel({
         newFolderName={newFolderName}
         setNewFolderName={setNewFolderName}
         onCreateFolder={createNewFolder}
+        onCreateChat={() => createChatThread()} // Wrap to avoid passing MouseEvent
         query={query}
         setQuery={setQuery}
         onUploadFiles={() => fileInputRef.current?.click()}
@@ -139,14 +158,17 @@ export function DocumentPanel({
       <ItemsList
         folders={filtered.folders}
         docs={filtered.docs}
+        chats={filtered.chats}
         selectedFolder={selectedFolder}
         selectedDocument={selectedDocument}
+        selectedChat={selectedChat}
         selectionMode={isSelectionMode}
         hasSelection={(id) => selectedIds.has(id)}
         toggleSelection={toggleSelection}
         ingestingMap={ingestJobs}
         onSelectFolder={setSelectedFolder}
         onSelectDoc={setSelectedDocument}
+        onSelectChat={setSelectedChat}
         onRenameFolder={(f) => {
           setRenameValue(f.name);
           setEditingFolder(f);
@@ -157,6 +179,12 @@ export function DocumentPanel({
           setEditingDoc(d);
         }}
         onDeleteDoc={deleteDocById}
+        onRenameChat={(c) => {
+            setRenameValue(c.title);
+            setEditingChat(c);
+        }}
+        onDeleteChat={deleteChatThread}
+        onCreateChatThread={createChatThread}
         onDragOver={handleDragOver}
         onDropOnFolder={handleDropOnFolder}
         onDragStartDoc={handleDragStartDoc}
@@ -183,6 +211,14 @@ export function DocumentPanel({
         onRenameValueChange={setRenameValue}
         onSave={renameFolder}
       />
+
+      <RenameChatDialog
+        chat={editingChat}
+        onOpenChange={(open) => !open && setEditingChat(null)}
+        renameValue={renameValue}
+        onRenameValueChange={setRenameValue}
+        onSave={renameChat}
+      />
     </PanelShell>
   );
-}
+});
