@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { JobStatusResponse, AgenticResult } from "@/lib/api";
+import { AgenticResultSchema } from "./api";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -46,3 +48,63 @@ export function getStringColor(str: string): string {
   const index = Math.abs(hash) % colors.length;
   return colors[index];
 }
+
+export function isDoneStatus(s: string): boolean {
+  const v = normalizeStatus(s);
+  return (
+    v.includes("completed") ||
+    v.includes("success") ||
+    v.includes("succeeded") ||
+    v.includes("finished")
+  );
+}
+
+export function isFailedStatus(s: string): boolean {
+  const v = normalizeStatus(s);
+  return v.includes("failed") || v.includes("cancel");
+}
+
+export function parseAgenticOutput(
+  output: JobStatusResponse["output"],
+): AgenticResult | null {
+  if (!output || typeof output !== "object") return null;
+  const parsed = AgenticResultSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+
+export function statusTone(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  const s = normalizeStatus(status);
+  if (s === "ingested" || s === "completed") return "secondary";
+  if (s === "failed") return "destructive";
+  if (s === "uploaded") return "outline";
+  return "default";
+}
+
+export function onlyPdfFiles(files: File[]): {
+  valid: File[];
+  skipped: number;
+} {
+  const valid = files.filter(
+    (f) =>
+      f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"),
+  );
+  return { valid, skipped: files.length - valid.length };
+}
+
+interface FileWithPath extends File {
+  webkitRelativePath: string;
+}
+
+export function inferFolderName(files: File[]): string | undefined {
+  const file = files.find(
+    (f) => (f as FileWithPath).webkitRelativePath,
+  ) as FileWithPath | undefined;
+  
+  const path = file?.webkitRelativePath;
+  if (!path) return undefined;
+  return path.split("/")[0];
+}
+
