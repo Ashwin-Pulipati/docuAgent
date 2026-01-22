@@ -36,7 +36,33 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 - **Branched Chat History:** Create multiple chat threads per document, rename them, and branch conversations to explore different topics without losing context.
 - **Smart Citations:** Every answer comes with clickable citations that highlight the exact source text and page number.
 - **Context-Aware Sidebar:** A dynamic sidebar that adapts to your selection, showing relevant chats and document hierarchies.
-- **Background Processing:** Seamless document ingestion and embedding handled by robust background jobs.
+- Background Processing: Seamless document ingestion and embedding handled by robust background jobs.
+
+## 🏗️ System Architecture
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/89169ae4-e8f9-4d80-a5d5-6f41d241ba13" alt="DocuAgent System Architecture Diagram" width="900">
+</div>
+<br/>
+
+DocuAgent is engineered as a high-performance Agentic RAG (Retrieval-Augmented Generation) platform. The architecture is purposefully decoupled into a high-concurrency API layer and a durable, event-driven background orchestration layer to handle complex document intelligence tasks.
+
+### 1. Presentation & Interaction Layer
+**Frontend (Next.js 16):** Leverages the latest React 19 patterns for a stream-first user experience. Custom hooks manage optimistic UI updates and real-time citation rendering during long-running agentic reasoning.
+
+**Backend (FastAPI):** A high-performance Python gateway that acts as the system's "traffic controller". It utilizes SQLModel for type-safe relational mapping and manages multi-tenant file uploads to secure storage.
+
+### 2. Durable Orchestration (Inngest Workflows)
+**Asynchronous Ingestion Pipeline:** Document processing is offloaded to Inngest to ensure 100% reliability. This workflow manages PDF parsing, recursive character chunking, and parallel embedding generation, shielding the main thread from heavy computational loads.
+
+**Agentic Reasoning Loop:** Query execution is treated as a durable state machine. The agent performs intent classification, multi-pass vector retrieval, and self-correction (Reflexion) before synthesizing the final grounded response.
+
+### 3. Intelligence & Persistence Layer
+**Vector Memory (Qdrant):** A high-performance vector database used for semantic retrieval. It stores high-dimensional embeddings and supports complex metadata filtering to ensure that citations point back to exact document coordinates.
+
+**Relational Persistence (Postgres):** Manages structured data, including user workspaces, document metadata, and historical chat threads.
+
+**AI Engine (OpenAI GPT-4o):** Powers the core reasoning engine, embedding generation, and final synthesis of retrieved context into human-readable answers.
+
 
 ## ▶️ Getting Started
 
