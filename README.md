@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/Ashwin-Pulipati/DocuAgent">
+  <a href="https://github.com/Ashwin-Pulipati/docuAgent">
     <img src="client/public/logo.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -8,7 +8,7 @@
   <p align="center">
     An intelligent, Agentic RAG-powered document assistant for seamless querying, summarization, and extraction from PDFs.
     <br />
-    <a href="https://github.com/Ashwin-Pulipati/DocuAgent"><strong>View Demo »</strong></a>
+    <a href="https://github.com/Ashwin-Pulipati/docuAgent"><strong>View Demo »</strong></a>
   </p>
 </div>
 
@@ -20,13 +20,14 @@ DocuAgent is a powerful, full-stack application designed to transform how users 
 
 This project is built with a cutting-edge tech stack ensuring performance, reliability, and a superior user experience.
 
-*   **Frontend:** [Next.js](https://nextjs.org/) (React)
-*   **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python)
+*   **Frontend:** [Next.js](https://nextjs.org/) ([React.js](https://react.dev/))
+*   **Backend:** [FastAPI](https://fastapi.tiangolo.com/) ([Python](https://www.python.org/))
 *   **Database:** [PostgreSQL](https://www.postgresql.org/) with [SQLModel](https://sqlmodel.tiangolo.com/)
 *   **Vector Store:** [Qdrant](https://qdrant.tech/)
 *   **AI Orchestration:** [Inngest](https://www.inngest.com/)
 *   **LLM Integration:** [OpenAI](https://platform.openai.com/) / [LlamaIndex](https://www.llamaindex.ai/)
 *   **UI:** [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
+*   **Deployment:** [Vercel](https://vercel.com/) (Frontend) & [Render](https://render.com/) (Backend)
 
 ## ✅ Key Features
 
