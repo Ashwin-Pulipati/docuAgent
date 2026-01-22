@@ -51,6 +51,7 @@ class Citation(BaseModel):
     chunk_id: str
     source: str
     quote: str = ""
+    page_number: Optional[int] = None
 
 
 class AgenticResult(BaseModel):

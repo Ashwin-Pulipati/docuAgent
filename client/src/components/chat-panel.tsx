@@ -7,7 +7,7 @@ import type {
   JobStatusResponse,
 } from "@/lib/api";
 import { AgenticResultSchema, getJobStatus, postQuery } from "@/lib/api";
-import { cn, friendlyStatus, normalizeStatus } from "@/lib/utils";
+import { cn, friendlyStatus, normalizeStatus, getStringColor } from "@/lib/utils";
 import React, {
   useCallback,
   useEffect,
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -35,7 +36,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Copy, FileText, Origami, Send } from "lucide-react";
+import { Check, Copy, FileText, Origami, Send, Edit2, Square } from "lucide-react";
 
 type MessageStatus = "pending" | "complete" | "error";
 
@@ -77,11 +78,13 @@ const MessageItem = React.memo(function MessageItem({
   isUser,
   onCopy,
   isCopied,
+  onEdit,
 }: {
   readonly msg: Message;
   readonly isUser: boolean;
   readonly onCopy: () => void;
   readonly isCopied: boolean;
+  readonly onEdit?: () => void;
 }) {
   return (
     <li className={cn("group flex items-start gap-3", isUser && "justify-end")}>
@@ -106,7 +109,7 @@ const MessageItem = React.memo(function MessageItem({
           className={cn(
             "rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm",
             "border border-border/50",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring translate-y-6",
             isUser
               ? cn(
                   "rounded-tr-none",
@@ -122,26 +125,60 @@ const MessageItem = React.memo(function MessageItem({
           {msg.text}
 
           {msg.status === "pending" && (
-            <div
-              className="mt-2 flex items-center gap-1 text-xs opacity-70"
+            <span
+              className="ml-1 inline-flex items-center gap-1"
               aria-label="Typing indicator"
             >
-              <span className="animate-pulse">●</span>
-              <span className="animate-pulse delay-75">●</span>
-              <span className="animate-pulse delay-150">●</span>
-            </div>
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-pulse delay-75" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-pulse delay-150" />
+            </span>
           )}
+
+          {!isUser &&
+            msg.result?.citations &&
+            msg.result.citations.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-border/30">
+                {msg.result.citations.map((c, i) => (
+                  <Badge
+                    key={i}
+                    variant="outline"
+                    className={cn(
+                      "text-[10px] transition-colors",
+                      getStringColor(c.source),
+                    )}
+                    title={c.quote}
+                  >
+                    {c.source} {c.page_number ? `(p. ${c.page_number})` : ""}
+                  </Badge>
+                ))}
+              </div>
+            )}
         </div>
 
-        {!isUser && msg.status !== "pending" && (
+        <div
+          className={cn(
+            "absolute top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100",
+            isUser ? "-left-20" : "-right-10",
+          )}
+        >
+          {isUser && onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10 translate-y-1/2"
+              onClick={onEdit}
+              aria-label="Edit message"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
             className={cn(
-              "absolute -right-10 top-2 h-9 w-9 rounded-2xl opacity-0 transition-opacity group-hover:opacity-100",
-              "neo-glass",
-              isCopied &&
-                "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+              "h-8 w-8 rounded-full bg-background/50 shadow-sm backdrop-blur-sm hover:bg-accent/10 translate-y-1/2",
+              isCopied && "text-primary",
             )}
             onClick={onCopy}
             aria-label="Copy message text"
@@ -152,14 +189,14 @@ const MessageItem = React.memo(function MessageItem({
               <Copy className="h-3.5 w-3.5" />
             )}
           </Button>
-        )}
+        </div>
       </div>
 
       {isUser && (
         <Avatar aria-label="You" className="h-9 w-9">
           <AvatarImage src="/user.png" alt="You" className="object-cover" />
           <AvatarFallback className="bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 text-muted-foreground brightness-105">
-            <Origami className="h-5 w-5 scale-x-[-1]" />
+            <Origami className="h-5 w-5 scale-x-[-1] text-rosewater/80" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -174,7 +211,7 @@ export function ChatPanel({
   readonly selectedDocument: Document | null;
   readonly selectedFolder: Folder | null;
 }) {
-  const [messages, { push, updateAt }] = useList<Message>([]);
+  const [messages, { push, updateAt, set }] = useList<Message>([]);
   const [inputValue, setInputValue] = useState("");
   const [polling, setPolling] = useState<Map<string, PollingEntry>>(new Map());
   const initialized = useRef(false);
@@ -276,7 +313,7 @@ export function ChatPanel({
     const agentMsg: Message = {
       id: `agent-${Date.now()}`,
       sender: "agent",
-      text: "Analysing…",
+      text: "Analysing",
       status: "pending",
     };
     push(agentMsg);
@@ -313,6 +350,30 @@ export function ChatPanel({
     updateAt,
     network.online,
   ]);
+
+  const stopGenerating = useCallback(() => {
+    // Find pending message(s) and stop polling
+    const newPolling = new Map(polling);
+    newPolling.forEach(({ idx }) => {
+        updateAt(idx, { ...messages[idx], status: "error", text: "Stopped by user." });
+    });
+    setPolling(new Map());
+  }, [polling, updateAt, messages]);
+
+  const handleEdit = useCallback((msgId: string, text: string) => {
+    const idx = messages.findIndex(m => m.id === msgId);
+    if (idx === -1) return;
+    
+    // Stop any ongoing generation first if we are editing
+    if (polling.size > 0) {
+        stopGenerating();
+    }
+
+    setInputValue(text);
+    // Remove this message and everything after it
+    const newMessages = messages.slice(0, idx);
+    set(newMessages);
+  }, [messages, set, polling, stopGenerating]);
 
   useEffect(() => {
     if (!viewportRef.current) return;
@@ -355,6 +416,8 @@ export function ChatPanel({
     selectedDocument &&
     (normalizeStatus(selectedDocument.status) === "ingested" ||
       normalizeStatus(selectedDocument.status) === "completed");
+
+  const isGenerating = polling.size > 0;
 
   return (
     <Card className="glass-card flex h-full flex-col border border-border/50 bg-card/20 shadow-none">
@@ -402,6 +465,7 @@ export function ChatPanel({
                 isUser={msg.sender === "user"}
                 onCopy={handleCopyFactory(msg.id, msg.text)}
                 isCopied={copiedId === msg.id && copiedValue === msg.text}
+                onEdit={msg.sender === "user" ? () => handleEdit(msg.id, msg.text) : undefined}
               />
             ))}
           </ul>
@@ -419,28 +483,40 @@ export function ChatPanel({
             placeholder={
               canAsk ? `Ask about this ${targetType}…` : "Wait for processing…"
             }
-            disabled={!canAsk || asking || checking || !network.online}
-            className="border-none bg-transparent px-4 shadow-none focus-visible:ring-0"
-            aria-disabled={!canAsk || asking || checking || !network.online}
+            disabled={!canAsk || asking || checking || !network.online || isGenerating}
+            className="border-none bg-transparent px-4 shadow-none focus-visible:ring-0 "
+            aria-disabled={!canAsk || asking || checking || !network.online || isGenerating}
             aria-label="Chat input"
           />
-
-          <Button
-            onClick={() => void submitQuestion()}
-            disabled={
-              !canAsk ||
-              asking ||
-              checking ||
-              !inputValue.trim() ||
-              !network.online
-            }
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 shrink-0 rounded-2xl bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 text-muted-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Send message"
-          >
-            <Send className="h-4 w-4" aria-hidden="true" />
-          </Button>
+          
+          {isGenerating ? (
+            <Button
+                onClick={stopGenerating}
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive/20"
+                aria-label="Stop generating"
+            >
+                <Square className="h-4 w-4 fill-current" />
+            </Button>
+          ) : (
+            <Button
+                onClick={() => void submitQuestion()}
+                disabled={
+                !canAsk ||
+                asking ||
+                checking ||
+                !inputValue.trim() ||
+                !network.online
+                }
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 rounded-2xl bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 text-muted-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring "
+                aria-label="Send message"
+            >
+                <Send className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>
