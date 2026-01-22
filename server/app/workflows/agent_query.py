@@ -108,7 +108,7 @@ async def agent_query(ctx: inngest.Context):
     sources = sorted({c["source"] for c in retrieved if c.get("source")})
 
     context_pack = "\n\n".join(
-        f"[chunk_id={c['chunk_id']} | source={c['source']} | chunk_index={c.get('chunk_index')}]\n{c['text']}"
+        f"[chunk_id={c['chunk_id']} | source={c['source']} | page={c.get('page_number')} | chunk_index={c.get('chunk_index')}]\n{c['text']}"
         for c in retrieved
     )
 
@@ -171,7 +171,7 @@ User request:
 
 Return ONLY JSON with:
 - answer: string
-- citations: array of {{"chunk_id":"...","source":"...","quote":"..."}}
+- citations: array of {{"chunk_id":"...","source":"...","page_number":123,"quote":"..."}}
   - quote must be short (<= ~25 words)
 - needs_clarification: boolean
 - clarifying_question: string|null

@@ -16,6 +16,7 @@ class RetrievedChunk:
     text: str
     doc_id: Optional[str] = None
     chunk_index: Optional[int] = None
+    page_number: Optional[int] = None
 
 
 class QdrantVectorStore:
@@ -90,6 +91,7 @@ class QdrantVectorStore:
                         text=text,
                         doc_id=payload.get("doc_id"),
                         chunk_index=payload.get("chunk_index"),
+                        page_number=payload.get("page_number"),
                     )
                 )
             return out
@@ -129,6 +131,7 @@ class QdrantVectorStore:
                             text=text,
                             doc_id=payload.get("doc_id"),
                             chunk_index=payload.get("chunk_index"),
+                            page_number=payload.get("page_number"),
                         )
                     )
             return out

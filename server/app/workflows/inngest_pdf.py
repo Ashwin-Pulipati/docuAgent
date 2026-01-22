@@ -29,6 +29,7 @@ class Chunked(BaseModel):
     sha256: str
     pdf_path: str
     chunks: list[str]
+    chunk_metadatas: list[dict]
 
 
 class Upserted(BaseModel):
@@ -47,8 +48,18 @@ async def inngest_pdf(ctx: inngest.Context):
         source_id = str(ctx.event.data.get("source_id", pdf_path))
         sha256 = str(ctx.event.data.get("sha256", ""))
 
-        chunks = chunker.load_and_chunk_pdf(pdf_path)
-        return Chunked(doc_id=doc_id, source_id=source_id, sha256=sha256, pdf_path=pdf_path, chunks=chunks).model_dump()
+        chunk_dicts = chunker.load_and_chunk_pdf(pdf_path)
+        chunks = [c["text"] for c in chunk_dicts]
+        metadatas = [{"page_number": c["page_number"]} for c in chunk_dicts]
+        
+        return Chunked(
+            doc_id=doc_id, 
+            source_id=source_id, 
+            sha256=sha256, 
+            pdf_path=pdf_path, 
+            chunks=chunks,
+            chunk_metadatas=metadatas
+        ).model_dump()
 
     async def _embed_and_upsert(payload_dict: dict) -> dict:
         payload = Chunked.model_validate(payload_dict)
@@ -70,6 +81,7 @@ async def inngest_pdf(ctx: inngest.Context):
                 "sha256": payload.sha256,
                 "chunk_index": i,
                 "text": payload.chunks[i],
+                "page_number": payload.chunk_metadatas[i]["page_number"]
             }
             for i in range(len(payload.chunks))
         ]

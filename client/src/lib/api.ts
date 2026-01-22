@@ -32,6 +32,7 @@ export const AgenticResultSchema = z.object({
         chunk_id: z.string(),
         source: z.string(),
         quote: z.string().optional().default(""),
+        page_number: z.number().nullable().optional(),
       }),
     )
     .optional()

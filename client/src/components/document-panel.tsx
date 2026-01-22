@@ -548,17 +548,23 @@ export function DocumentPanel({
                     </Button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="glass-card">
+                  <DropdownMenuContent align="end" className="glass-card p-1">
                     <DropdownMenuItem
                       onClick={() => fileInputRef.current?.click()}
+                      className="rounded-full transition-colors hover:bg-accent/10 hover:text-accent focus:bg-accent/10 focus:text-accent"
                     >
-                      <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+                      <FileText
+                        className="mr-2 h-4 w-4 text-chart-5"
+                        aria-hidden="true"
+                      />
                       Upload Files
                     </DropdownMenuItem>
+
                     <DropdownMenuItem
                       onClick={() => folderInputRef.current?.click()}
+                      className="rounded-full transition-colors hover:bg-accent/10 hover:text-accent focus:bg-accent/10 focus:text-accent"
                     >
-                      <FolderUp className="mr-2 h-4 w-4" aria-hidden="true" />
+                      <FolderUp className="mr-2 h-4 w-4 text-chart-3" aria-hidden="true" />
                       Upload Folder
                     </DropdownMenuItem>
                   </DropdownMenuContent>
