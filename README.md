@@ -14,7 +14,7 @@
 
 ## 📝 About The Project
 
-DocuAgent is a powerful, full-stack application designed to transform how users interact with their documents. Leveraging advanced Agentic RAG (Retrieval-Augmented Generation), it allows users to upload PDF documents or entire folders and chat with them naturally. Whether you need specific details, broad summaries, or data extraction, DocuAgent's intelligent agents work to provide accurate, citation-backed answers. With a modern, intuitive UI and robust document management features, it's the ultimate tool for researchers, professionals, and anyone dealing with information overload.
+DocuAgent is a powerful, full-stack Agentic AI RAG application designed to transform how users interact with their documents. Leveraging advanced Agentic RAG (Retrieval-Augmented Generation), it allows users to upload PDF documents or entire folders and chat with them naturally. Whether you need specific details, broad summaries, or data extraction, DocuAgent's intelligent agents work to provide accurate, citation-backed answers. With a modern, intuitive UI and robust document management features, it's the ultimate tool for researchers, professionals, and anyone dealing with information overload.
 
 ## ⚙️ Built With
 
