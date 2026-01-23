@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     chat_model: str = Field(default="gpt-4o-mini")
     
     qdrant_url: str = Field(default="http://localhost:6333")
+    qdrant_api_key: str = Field(default="")
     qdrant_collection: str = Field(default="docs")
     
     default_top_k: int = Field(default=6)

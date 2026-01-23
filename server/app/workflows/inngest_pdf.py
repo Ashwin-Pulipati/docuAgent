@@ -68,7 +68,12 @@ async def inngest_pdf(ctx: inngest.Context):
             return Upserted(ingested=0).model_dump()
 
         # Lazy init Qdrant to avoid module-level connection issues
-        store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+        store = QdrantVectorStore(
+            url=settings.qdrant_url, 
+            api_key=settings.qdrant_api_key,
+            collection=settings.qdrant_collection, 
+            dim=settings.embed_dim
+        )
         
         vecs = embedder.embed(payload.chunks)
        

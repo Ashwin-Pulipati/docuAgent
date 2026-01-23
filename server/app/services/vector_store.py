@@ -20,8 +20,8 @@ class RetrievedChunk:
 
 
 class QdrantVectorStore:
-    def __init__(self, url: str, collection: str, dim: int) -> None:
-        self.client = QdrantClient(url=url, timeout=30)
+    def __init__(self, url: str, collection: str, dim: int, api_key: Optional[str] = None) -> None:
+        self.client = QdrantClient(url=url, api_key=api_key, timeout=30)
         self.collection = collection
         try:
             if not self.client.collection_exists(self.collection):

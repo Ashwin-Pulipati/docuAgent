@@ -71,7 +71,12 @@ async def agent_query(ctx: inngest.Context):
                     return []
 
         # Lazy init Qdrant
-        store = QdrantVectorStore(url=settings.qdrant_url, collection=settings.qdrant_collection, dim=settings.embed_dim)
+        store = QdrantVectorStore(
+            url=settings.qdrant_url, 
+            api_key=settings.qdrant_api_key,
+            collection=settings.qdrant_collection, 
+            dim=settings.embed_dim
+        )
         
         qvec = embedder.embed([question])[0]
         
