@@ -30,7 +30,9 @@ export function RenameDocumentDialog({
     <Dialog open={!!document} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card">
         <DialogHeader>
-          <DialogTitle>Rename Document</DialogTitle>
+          <DialogTitle className="text-gradient font-bold text-3xl">
+            Rename Document
+          </DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <Label htmlFor="rename">Filename</Label>
@@ -38,10 +40,19 @@ export function RenameDocumentDialog({
             id="rename"
             value={renameValue}
             onChange={(e) => onRenameValueChange(e.target.value)}
+            className="mt-2 rounded-full"
           />
         </div>
         <DialogFooter>
-          <Button onClick={onSave}>Save</Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="rounded-full text-primary bg-primary/10 font-bold"
+            onClick={onSave}
+          >
+            <SaveIcon className="size-4!" />
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -67,7 +78,7 @@ export function RenameFolderDialog({
     <Dialog open={!!folder} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card">
         <DialogHeader>
-          <DialogTitle>Rename Folder</DialogTitle>
+          <DialogTitle className="text-gradient font-bold text-3xl">Rename Folder</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <Label htmlFor="rename-folder">Folder Name</Label>
@@ -75,10 +86,11 @@ export function RenameFolderDialog({
             id="rename-folder"
             value={renameValue}
             onChange={(e) => onRenameValueChange(e.target.value)}
+            className="mt-2 rounded-full"
           />
         </div>
         <DialogFooter>
-          <Button onClick={onSave}>Save</Button>
+          <Button variant="ghost" size="lg" className="rounded-full text-primary bg-primary/10 font-bold" onClick={onSave}><SaveIcon className="size-4!"/>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -114,17 +126,17 @@ export function RenameChatDialog({
             id="rename-chat"
             value={renameValue}
             onChange={(e) => onRenameValueChange(e.target.value)}
-            className="rounded-full mt-4"
+            className="rounded-full mt-2"
           />
         </div>
         <DialogFooter>
           <Button
             variant="ghost"
             size="lg"
+            className="rounded-full text-primary bg-primary/10 font-bold"
             onClick={onSave}
-            className="flex items-center justify-center gap-2 rounded-full bg-primary/10 text-primary"
           >
-            <SaveIcon className="w-4 h-4" />
+            <SaveIcon className="size-4!" />
             Save
           </Button>
         </DialogFooter>
