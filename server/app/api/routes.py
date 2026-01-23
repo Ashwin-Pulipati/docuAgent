@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, List
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Response
 import inngest
 from sqlmodel import Session, select
 from sqlalchemy import desc
@@ -62,7 +62,9 @@ def update_folder(folder_id: int, req: FolderUpdate):
         return FolderResponse(id=folder.id, name=folder.name, created_at=str(folder.created_at))
 
 @router.get("/folders", response_model=List[FolderResponse])
-def list_folders():
+def list_folders(response: Response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     with Session(engine) as session:
         repo = FolderRepo(session)
         folders = repo.list_all()
@@ -224,7 +226,9 @@ async def query_agentic(req: QueryRequest):
     return QueryResponse(query_event_id=res[0])
 
 @router.get("/jobs/{event_id}", response_model=JobStatusResponse)
-def job_status(event_id: str):
+def job_status(event_id: str, response: Response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     run = jobs.get_latest_run(event_id)
     return JobStatusResponse(
         status=run.get("status") or "Unknown",
@@ -234,7 +238,9 @@ def job_status(event_id: str):
     )
 
 @router.get("/documents")
-def list_documents():
+def list_documents(response: Response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     with Session(engine) as session:
         stmt = select(Document).order_by(desc(Document.created_at))
         docs = session.exec(stmt).all()
@@ -269,7 +275,9 @@ def create_chat(req: ChatThreadCreate):
         )
 
 @router.get("/chats", response_model=List[ChatThreadResponse])
-def list_chats(folder_id: Optional[int] = None, document_id: Optional[int] = None):
+def list_chats(response: Response, folder_id: Optional[int] = None, document_id: Optional[int] = None):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     with Session(engine) as session:
         repo = ChatRepo(session)
         threads = repo.list_threads(folder_id, document_id)

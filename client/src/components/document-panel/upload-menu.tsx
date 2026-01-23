@@ -22,7 +22,7 @@ export function UploadMenu({ busy, onUploadFiles, onUploadFolder }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9rounded-full bg-gradient md:flex md:items-center md:px-12 px-0"
+          className="h-9 w-9 rounded-full bg-gradient md:flex md:items-center md:px-12 px-0"
           disabled={busy}
           aria-label="Upload options"
           title="Upload options"
