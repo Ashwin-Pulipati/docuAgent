@@ -61,6 +61,7 @@ type Return = Readonly<{
   ingestJobs: Map<string, IngestJob>;
 
   busy: boolean;
+  isRefreshing: boolean;
   loadingData: boolean;
 
   refresh: () => void;
