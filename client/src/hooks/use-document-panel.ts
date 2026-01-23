@@ -105,7 +105,7 @@ export function useDocumentPanel({
   selectedDocument,
   setSelectedDocument,
   selectedFolder,
-  _setSelectedFolder,
+  setSelectedFolder: _setSelectedFolder,
 }: Args): Return {
   const [docs, setDocs] = React.useState<Document[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
