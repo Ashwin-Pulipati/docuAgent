@@ -207,11 +207,40 @@ export function useAgenticChat({
 
   useInterval(
     () => {
+      // 1. Poll specific known session jobs
       polling.forEach((v, eventId) => {
         void checkJob(eventId, v.idx);
       });
+
+      // 2. Persistent check: If any message in history is "pending", 
+      // trigger a full chat refresh from the server.
+      const hasPendingMessages = messages.some(m => m.status === "pending");
+      if (hasPendingMessages && selectedChat) {
+          getChat(selectedChat.id).then(chat => {
+              const history: Message[] = chat.messages.map(m => ({
+                  id: m.id.toString(),
+                  sender: m.role as "user" | "agent",
+                  text: m.content,
+                  result: m.citations ? { 
+                      citations: m.citations, 
+                      answer: m.content, 
+                      intent: "qa", 
+                      needs_clarification: false,
+                      sources: [],
+                      num_contexts: 0
+                  } : undefined,
+                  status: (m.content === "Analysing" || !m.content) ? "pending" : "complete"
+              }));
+              
+              // Only update if something actually changed (e.g. content no longer "Analysing")
+              const hasChanged = history.some((m, i) => m.text !== messages[i]?.text || m.status !== messages[i]?.status);
+              if (hasChanged) {
+                  setMessages(history);
+              }
+          }).catch(() => {});
+      }
     },
-    polling.size > 0 ? 2000 : null,
+    (polling.size > 0 || messages.some(m => m.status === "pending")) ? 2000 : null,
   );
 
   const [{ loading: asking }, submit] = useAsyncFn(async () => {

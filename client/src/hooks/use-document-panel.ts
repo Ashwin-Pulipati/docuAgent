@@ -560,7 +560,8 @@ export function useDocumentPanel({
       }
   }, [refreshFn]);
 
-  const busy = uploading || loadingData || pollingIngest;
+  const busy = uploading;
+  const isRefreshing = loadingData || pollingIngest;
 
   return {
     docs,
@@ -581,6 +582,7 @@ export function useDocumentPanel({
     dragHandlers,
     ingestJobs,
     busy,
+    isRefreshing,
     loadingData,
     refresh: () => void refreshFn(),
     openCreateFolder,

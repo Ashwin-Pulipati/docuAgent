@@ -52,6 +52,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
     ingestJobs,
 
     busy,
+    isRefreshing,
     refresh,
 
     openCreateFolder,
@@ -106,6 +107,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         selectedFolder={selectedFolder}
         selectedDocument={selectedDocument}
         busy={busy}
+        isRefreshing={isRefreshing}
         isSelectionMode={isSelectionMode}
         canEnterSelectionMode={
           filtered.docs.length > 0 || filtered.folders.length > 0 || filtered.chats.length > 0
