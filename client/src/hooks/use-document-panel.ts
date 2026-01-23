@@ -250,39 +250,44 @@ export function useDocumentPanel({
     [refreshFn],
   );
 
+  const ACTIVE_STATUSES = new Set([
+    "uploaded",
+    "queued",
+    "processing",
+    "ingesting",
+    "failed",
+  ]);
+  const READY_STATUSES = new Set(["ingested", "completed"]);
+
+  const hasActiveDocs = docs.some((d) =>
+    ACTIVE_STATUSES.has((d.status || "").toLowerCase()),
+  );
+
   useInterval(
     () => {
       ingestJobs.forEach((job) => void pollIngest(job.docId, job.eventId));
-
-      const ACTIVE_STATUSES = new Set([
-        "uploaded",
-        "queued",
-        "processing",
-        "ingesting",
-        "failed",
-      ]);
-
-      const hasActiveDocs = docs.some((d) =>
-        ACTIVE_STATUSES.has((d.status || "").toLowerCase()),
-      );
-
       if (hasActiveDocs) {
         void refreshFn();
       }
     },
-    ingestJobs.size > 0 ||
-      docs.some((d) =>
-        [
-          "uploaded",
-          "queued",
-          "processing",
-          "ingesting",
-          "failed",
-        ].includes((d.status || "").toLowerCase()),
-      )
-      ? 1000
-      : null,
+    ingestJobs.size > 0 || hasActiveDocs ? 1000 : null,
   );
+
+  React.useEffect(() => {
+    setIngestJobs((prev) => {
+      if (prev.size === 0) return prev;
+
+      const next = new Map(prev);
+      docs.forEach((d) => {
+        const st = (d.status || "").toLowerCase();
+        if (READY_STATUSES.has(st)) {
+          next.delete(d.doc_id);
+        }
+      });
+
+      return next;
+    });
+  }, [docs]);
 
   const [{ loading: uploading }, doUpload] = useAsyncFn(
     async (files: File[], folderName?: string) => {
@@ -601,7 +606,7 @@ export function useDocumentPanel({
   }, [refreshFn]);
 
   const busy = uploading;
-  const isRefreshing = loadingData || pollingIngest;
+  const isRefreshing = ingestJobs.size > 0 || hasActiveDocs;
 
   return {
     docs,
