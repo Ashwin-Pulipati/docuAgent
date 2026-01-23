@@ -105,7 +105,7 @@ export function useDocumentPanel({
   selectedDocument,
   setSelectedDocument,
   selectedFolder,
-  setSelectedFolder,
+  _setSelectedFolder,
 }: Args): Return {
   const [docs, setDocs] = React.useState<Document[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
@@ -136,11 +136,14 @@ export function useDocumentPanel({
 
   const selectedFolderId = selectedFolder?.id ?? null;
 
-  const [{ loading: loadingData }, refreshFn] = useAsyncFn(async () => {
+  const refreshInProgress = React.useRef(false);
+  const refreshPending = React.useRef(false);
+
+  const performFetch = React.useCallback(async () => {
     const [d, f, c] = await Promise.all([
-        listDocuments(), 
-        listFolders(), 
-        listChats(selectedFolderId ?? undefined)
+      listDocuments(),
+      listFolders(),
+      listChats(selectedFolderId ?? undefined),
     ]);
     setDocs(d);
     setFolders(f);
@@ -153,6 +156,24 @@ export function useDocumentPanel({
         setSelectedDocument(updated);
     }
   }, [selectedDocument, setSelectedDocument, selectedFolderId]);
+
+  const [{ loading: loadingData }, refreshFn] = useAsyncFn(async () => {
+    if (refreshInProgress.current) {
+      refreshPending.current = true;
+      return;
+    }
+
+    refreshInProgress.current = true;
+    try {
+      await performFetch();
+    } finally {
+      refreshInProgress.current = false;
+      if (refreshPending.current) {
+        refreshPending.current = false;
+        void refreshFn();
+      }
+    }
+  }, [performFetch]);
 
   React.useEffect(() => {
     void refreshFn();
@@ -486,7 +507,7 @@ export function useDocumentPanel({
   );
 
   const handleDropOnRoot = React.useCallback(
-    (e: React.DragEvent, docId: string) => { 
+    (e: React.DragEvent) => { 
       e.preventDefault();
       const droppedDocId = e.dataTransfer.getData("docId");
       if (droppedDocId) void handleMoveDoc(droppedDocId, null);
@@ -610,7 +631,7 @@ export function useDocumentPanel({
     handleMoveDoc: (docId, folderId) => void handleMoveDoc(docId, folderId),
     handleDragStartDoc,
     handleDropOnFolder,
-    handleDropOnRoot: (e: React.DragEvent) => handleDropOnRoot(e, ""), 
+    handleDropOnRoot, 
     handleDragOver,
     createChatThread,
     deleteChatThread,
