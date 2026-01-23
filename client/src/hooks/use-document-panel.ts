@@ -230,9 +230,18 @@ export function useDocumentPanel({
 
   useInterval(
     () => {
+      // 1. Poll specific known jobs from the current session
       ingestJobs.forEach((job) => void pollIngest(job.docId, job.eventId));
+
+      // 2. Aggressive refresh: If we have ANY documents in "processing" or "queued" status, 
+      // trigger a global refresh to update their status in the UI list.
+      const hasProcessingDocs = docs.some(d => d.status === "processing" || d.status === "queued" || d.status === "failed");
+      if (hasProcessingDocs) {
+        void refreshFn();
+      }
     },
-    ingestJobs.size > 0 ? 2000 : null,
+    // Poll every 3 seconds if there is work to track
+    (ingestJobs.size > 0 || docs.some(d => d.status === "processing" || d.status === "queued")) ? 3000 : null,
   );
 
   const [{ loading: uploading }, doUpload] = useAsyncFn(
