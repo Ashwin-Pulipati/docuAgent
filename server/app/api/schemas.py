@@ -70,10 +70,16 @@ class ChatThreadCreate(BaseModel):
     folder_id: Optional[int] = None
     document_id: Optional[int] = None
     parent_id: Optional[int] = None
+    is_starred: bool = False
 
 
 class ChatThreadUpdate(BaseModel):
-    title: str = Field(min_length=1, max_length=100)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    is_starred: Optional[bool] = None
+
+
+class ReactionCreate(BaseModel):
+    emoji: str
 
 
 class ChatMessageResponse(BaseModel):
@@ -81,12 +87,14 @@ class ChatMessageResponse(BaseModel):
     role: str
     content: str
     citations: Optional[List[Citation]] = None
+    reactions: Optional[List[Dict[str, Any]]] = None
     created_at: str
 
 
 class ChatThreadResponse(BaseModel):
     id: int
     title: str
+    is_starred: bool
     folder_id: Optional[int]
     document_id: Optional[int]
     parent_id: Optional[int]

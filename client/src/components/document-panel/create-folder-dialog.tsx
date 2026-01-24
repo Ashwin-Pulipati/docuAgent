@@ -44,7 +44,9 @@ export function CreateFolderDialog({
       </DialogTrigger>
       <DialogContent className="glass-card">
         <DialogHeader>
-          <DialogTitle>Create New Folder</DialogTitle>
+          <DialogTitle className="text-gradient font-bold text-3xl">
+            Create New Folder
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -57,7 +59,14 @@ export function CreateFolderDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={onCreate}>Create</Button>
+          <Button
+            onClick={onCreate}
+            variant="ghost"
+            size="lg"
+            className="rounded-full text-primary bg-primary/10 font-bold"
+          >
+            <FolderPlus className="mr-1 size-4.5!" aria-hidden="true" />Create
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

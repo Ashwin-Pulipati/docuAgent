@@ -11,7 +11,7 @@ import { RenameDocumentDialog, RenameFolderDialog, RenameChatDialog } from "./re
 
 export interface DocumentPanelHandle {
   refresh: () => void;
-  createChat: (docId?: number, parentId?: number) => Promise<void>;
+  createChat: (docId?: number, parentId?: number) => Promise<ChatThread | undefined>;
 }
 
 export const DocumentPanel = forwardRef<DocumentPanelHandle, {
@@ -90,6 +90,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
 
     createChatThread,
     deleteChatThread,
+    toggleChatStar,
   } = useDocumentPanel({
     selectedDocument,
     setSelectedDocument,
@@ -97,9 +98,25 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
     setSelectedFolder,
   });
 
+  const handleCreateChat = React.useCallback(async (docId?: number, parentId?: number, folderId?: number) => {
+    const newChat = await createChatThread(docId, parentId, folderId);
+    if (newChat) {
+      setSelectedDocument(null);
+      setSelectedChat(newChat);
+    }
+    return newChat;
+  }, [createChatThread, setSelectedChat, setSelectedDocument]);
+
+  const handleDeleteChat = React.useCallback(async (id: number) => {
+      await deleteChatThread(id);
+      if (selectedChat?.id === id) {
+          setSelectedChat(null);
+      }
+  }, [deleteChatThread, selectedChat, setSelectedChat]);
+
   useImperativeHandle(ref, () => ({
     refresh,
-    createChat: createChatThread,
+    createChat: handleCreateChat,
   }));
 
   React.useEffect(() => {
@@ -156,7 +173,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         newFolderName={newFolderName}
         setNewFolderName={setNewFolderName}
         onCreateFolder={createNewFolder}
-        onCreateChat={() => createChatThread()}
+        onCreateChat={() => handleCreateChat()}
         query={query}
         setQuery={setQuery}
         onUploadFiles={() => fileInputRef.current?.click()}
@@ -218,8 +235,9 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
             setRenameValue(c.title);
             setEditingChat(c);
         }}
-        onDeleteChat={deleteChatThread}
-        onCreateChatThread={createChatThread}
+        onDeleteChat={handleDeleteChat}
+        onToggleStar={toggleChatStar}
+        onCreateChatThread={handleCreateChat}
         onDragOver={handleDragOver}
         onDropOnFolder={handleDropOnFolder}
         onDragStartDoc={handleDragStartDoc}

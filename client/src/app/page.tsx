@@ -57,11 +57,11 @@ export default function Home() {
       }
   };
 
-  const handleCreateChat = () => {
+  const handleCreateChat = async () => {
       if (selectedDocument) {
-          sidebarRef.current?.createChat(selectedDocument.id);
+          await sidebarRef.current?.createChat(selectedDocument.id);
       } else {
-          sidebarRef.current?.createChat();
+          await sidebarRef.current?.createChat();
       }
   };
 
@@ -79,12 +79,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 z-0 opacity-40 dark:opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-accent/30 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-secondary/30 blur-[120px] animate-pulse delay-1000" />
-      </div>
-
+    <div className="relative flex min-h-screen w-full bg-background text-foreground" >
       <DocumentPanel
         ref={sidebarRef}
         selectedDocument={selectedDocument}
@@ -96,7 +91,7 @@ export default function Home() {
         onSelectionReady={setSelectionReady}
       />
 
-      <SidebarInset className="relative flex h-full flex-col overflow-hidden">
+      <SidebarInset className="relative flex flex-1 flex-col">
         <Header />
 
         {isMobile && selectedDocument && (
@@ -115,7 +110,7 @@ export default function Home() {
 
         <main
           id="main"
-          className="z-10 flex-1 overflow-hidden p-4 md:p-6"
+          className="z-10 flex-1 p-0"
           aria-label="AI Chat Interface"
         >
           <ChatPanel

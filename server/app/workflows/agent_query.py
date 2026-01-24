@@ -38,6 +38,8 @@ class AgenticRAGResult(BaseModel):
     sources: list[str] = []
     needs_clarification: bool = False
     clarifying_question: Optional[str] = None
+    reaction: Optional[str] = None
+    message_id: Optional[int] = None
     num_contexts: int = 0
 
 
@@ -132,8 +134,7 @@ User request:
 {question}
 
 Return ONLY JSON:
-{{"intent":"qa"|"summarize"|"extract"|"clarify","clarifying_question":null|"..."}}.
-""".strip()
+{{"intent":"qa"|"summarize"|"extract"|"clarify","clarifying_question":null|"..."}}. """.strip()
 
     cls = await ctx.step.ai.infer(
         "classify-intent",
@@ -142,7 +143,7 @@ Return ONLY JSON:
             "temperature": 0,
             "max_tokens": 200,
             "messages": [
-                {"role": "system", "content": "Return only JSON."}, 
+                {"role": "system", "content": "Return only JSON. No markdown."}, 
                 {"role": "user", "content": classify_prompt},
             ],
         },
@@ -187,6 +188,7 @@ Return ONLY JSON with:
   - quote must be short (<= ~25 words)
 - needs_clarification: boolean
 - clarifying_question: string|null
+- reaction: string|null (single emoji e.g. "👍", "🤔", "🎉") if you want to react to the user's input with an emotion.
 """.strip()
 
     gen = await ctx.step.ai.infer(
@@ -208,7 +210,7 @@ Return ONLY JSON with:
     try:
         out_json = json.loads(raw)
     except Exception:
-        out_json = {"answer": raw.strip(), "citations": [], "needs_clarification": False, "clarifying_question": None}
+        out_json = {"answer": raw.strip(), "citations": [], "needs_clarification": False, "clarifying_question": None, "reaction": None}
 
     out = AgenticRAGResult(
         intent=intent if intent in ("qa", "summarize", "extract") else "qa",
@@ -216,15 +218,26 @@ Return ONLY JSON with:
         citations=out_json.get("citations") or [],
         needs_clarification=bool(out_json.get("needs_clarification", False)),
         clarifying_question=out_json.get("clarifying_question"),
+        reaction=out_json.get("reaction"),
         sources=sources,
         num_contexts=len(retrieved),
     )
     
     if thread_id:
         with Session(engine) as session:
+            repo = ChatRepo(session)
             final_content = out.clarifying_question if out.needs_clarification else out.answer
-            # Ensure citations are serializable (convert Pydantic models to dicts if needed, but schema expects dicts)
+            # Ensure citations are serializable
             citations_data = [c.dict() if hasattr(c, "dict") else c for c in out.citations]
-            ChatRepo(session).add_message(thread_id, "agent", final_content, citations=citations_data)
+            agent_msg = repo.add_message(thread_id, "agent", final_content, citations=citations_data)
+            out.message_id = agent_msg.id
+            
+            if out.reaction:
+                messages = repo.get_messages(thread_id)
+                # The agent message is the last one (index -1). The user message should be -2.
+                if len(messages) >= 2:
+                    user_msg = messages[-2]
+                    if user_msg.role == "user":
+                        repo.add_reaction(user_msg.id, out.reaction, role="agent")
 
     return out.model_dump()

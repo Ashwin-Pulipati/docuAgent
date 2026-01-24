@@ -135,8 +135,8 @@ class ChatRepo:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def create_thread(self, title: str, folder_id: Optional[int] = None, document_id: Optional[int] = None, parent_id: Optional[int] = None) -> ChatThread:
-        thread = ChatThread(title=title, folder_id=folder_id, document_id=document_id, parent_id=parent_id)
+    def create_thread(self, title: str, folder_id: Optional[int] = None, document_id: Optional[int] = None, parent_id: Optional[int] = None, is_starred: bool = False) -> ChatThread:
+        thread = ChatThread(title=title, folder_id=folder_id, document_id=document_id, parent_id=parent_id, is_starred=is_starred)
         self.session.add(thread)
         self.session.commit()
         self.session.refresh(thread)
@@ -160,10 +160,13 @@ class ChatRepo:
         stmt = stmt.order_by(desc(ChatThread.updated_at))
         return self.session.exec(stmt).all()
 
-    def update_thread(self, thread_id: int, title: str) -> Optional[ChatThread]:
+    def update_thread(self, thread_id: int, title: Optional[str] = None, is_starred: Optional[bool] = None) -> Optional[ChatThread]:
         thread = self.get_thread(thread_id)
         if thread:
-            thread.title = title
+            if title is not None:
+                thread.title = title
+            if is_starred is not None:
+                thread.is_starred = is_starred
             thread.updated_at = dt.datetime.now(dt.timezone.utc)
             self.session.add(thread)
             self.session.commit()
@@ -186,6 +189,54 @@ class ChatRepo:
             thread.updated_at = dt.datetime.now(dt.timezone.utc)
             self.session.add(thread)
             
+        self.session.commit()
+        self.session.refresh(msg)
+        return msg
+
+    def add_reaction(self, message_id: int, emoji: str, role: str) -> Optional[ChatMessage]:
+        msg = self.session.get(ChatMessage, message_id)
+        if not msg:
+            return None
+        
+        reactions = list(msg.reactions) if msg.reactions else []
+        
+        # Check if this reaction exists
+        found = False
+        for r in reactions:
+            if r["emoji"] == emoji:
+                # Toggle logic: if user already reacted, remove it? 
+                # The requirement is "add chat reactions". "Unstar" implies toggle.
+                # Emoji pickers usually toggle.
+                # We need to track who reacted. Since no auth, we assume "user" is one entity and "agent" is another.
+                if role == "user":
+                    if r.get("user_reacted"):
+                        r["user_reacted"] = False
+                        r["count"] -= 1
+                    else:
+                        r["user_reacted"] = True
+                        r["count"] += 1
+                elif role == "agent":
+                    # Agent just adds, or we track agent_reacted?
+                    # Let's track count.
+                    r["count"] += 1
+                
+                if r["count"] <= 0:
+                    reactions.remove(r)
+                found = True
+                break
+        
+        if not found:
+            # Create new reaction
+            new_reaction = {
+                "emoji": emoji,
+                "count": 1,
+                "user_reacted": role == "user"
+            }
+            reactions.append(new_reaction)
+            
+        # SQLModel requires reassignment to detect JSON change if it's mutable
+        msg.reactions = reactions
+        self.session.add(msg)
         self.session.commit()
         self.session.refresh(msg)
         return msg

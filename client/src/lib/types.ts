@@ -1,4 +1,4 @@
-import type { AgenticResult, Document, Folder, ChatThread } from "./api";
+import type { AgenticResult, Document, Folder, ChatThread, Reaction } from "./api";
 
 export type MessageStatus = "pending" | "complete" | "error";
 
@@ -8,6 +8,7 @@ export type Message = {
   text: string;
   result?: AgenticResult;
   status: MessageStatus;
+  reactions?: Reaction[];
 };
 
 export type PollingEntry = { idx: number };

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Document, Folder, ChatThread } from "@/lib/api";
-import { getJobStatus, postQuery, getChat } from "@/lib/api";
+import { getJobStatus, postQuery, getChat, addReaction } from "@/lib/api";
 import * as React from "react";
 import {
   useAsyncFn,
@@ -45,6 +45,7 @@ type Return = Readonly<{
   submit: () => void;
   stop: () => void;
   edit: (msgId: string, text: string) => void;
+  onReaction: (msgId: string, emoji: string) => void;
 
   checking: boolean;
   asking: boolean;
@@ -121,7 +122,8 @@ export function useAgenticChat({
                       sources: [],
                       num_contexts: 0
                   } : undefined,
-                  status: "complete"
+                  status: "complete",
+                  reactions: m.reactions ?? undefined
               }));
               setMessages(history);
               initialized.current = true;
@@ -188,9 +190,11 @@ export function useAgenticChat({
       const current = messages[idx];
       if (!current) return;
 
+      const messageId = parsed?.message_id ? parsed.message_id.toString() : eventId;
+
       updateMessageAt(idx, {
         ...current,
-        id: eventId,
+        id: messageId,
         status: failed ? "error" : "complete",
         text,
         result: parsed ?? undefined,
@@ -226,10 +230,11 @@ export function useAgenticChat({
                       sources: [],
                       num_contexts: 0
                   } : undefined,
-                  status: (m.content === "Analysing" || !m.content) ? "pending" : "complete"
+                  status: (m.content === "Analysing" || !m.content) ? "pending" : "complete",
+                  reactions: m.reactions ?? undefined
               }));
                
-              const hasChanged = history.some((m, i) => m.text !== messages[i]?.text || m.status !== messages[i]?.status);
+              const hasChanged = history.some((m, i) => m.text !== messages[i]?.text || m.status !== messages[i]?.status || JSON.stringify(m.reactions) !== JSON.stringify(messages[i]?.reactions));
               if (hasChanged) {
                   setMessages(history);
               }
@@ -351,6 +356,23 @@ export function useAgenticChat({
     [messages, polling.size, setMessages, setInputValue, stop],
   );
 
+  const handleReaction = React.useCallback(async (msgId: string, emoji: string) => {
+      if (isNaN(Number(msgId))) return; 
+      
+      try {
+          const updatedMsg = await addReaction(Number(msgId), emoji);
+          const idx = messages.findIndex(m => m.id === msgId);
+          if (idx !== -1) {
+              updateMessageAt(idx, {
+                  ...messages[idx],
+                  reactions: updatedMsg.reactions ?? undefined
+              });
+          }
+      } catch {
+          toast.error("Failed to add reaction");
+      }
+  }, [messages, updateMessageAt]);
+
   useKeyPressEvent("Escape", () => {
     if (isGenerating) stop();
   });
@@ -378,6 +400,7 @@ export function useAgenticChat({
     submit: () => void submit(),
     stop,
     edit,
+    onReaction: handleReaction,
     checking,
     asking,
     online,
