@@ -33,7 +33,7 @@ export function SystemMonitor() {
   }, [networkState.online, wasOffline]);
 
   React.useEffect(() => {
-    if (!batteryState.isSupported) return;
+    if (!batteryState.isSupported || !batteryState.fetched) return;
     
     const level = batteryState.level * 100;
     const isLow = level <= 20;
