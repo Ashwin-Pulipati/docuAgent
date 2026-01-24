@@ -238,6 +238,7 @@
     @apply bg-background text-foreground;
     font-size: var(--fluid-md);
     line-height: var(--fluid-line);
+    overflow-x: hidden;
   }
 
   @media (prefers-reduced-motion: reduce) {

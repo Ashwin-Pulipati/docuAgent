@@ -241,7 +241,7 @@ export function useAgenticChat({
           }).catch(() => {});
       }
     },
-    (polling.size > 0 || messages.some(m => m.status === "pending")) ? 2000 : null,
+    (polling.size > 0 || messages.some(m => m.status === "pending")) ? 750 : null,
   );
 
   const [{ loading: asking }, submit] = useAsyncFn(async () => {

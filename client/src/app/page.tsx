@@ -78,7 +78,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex min-h-screen w-full bg-background text-foreground" >
+    <div className="relative flex min-h-screen w-full bg-background text-foreground overflow-x-hidden">
       <DocumentPanel
         ref={sidebarRef}
         selectedDocument={selectedDocument}
@@ -90,7 +90,7 @@ export default function Home() {
         onSelectionReady={setSelectionReady}
       />
 
-      <SidebarInset className="relative flex flex-1 flex-col">
+      <SidebarInset className="relative flex flex-1 flex-col min-w-0">
         <Header />
 
         {isMobile && selectedDocument && (
@@ -113,7 +113,12 @@ export default function Home() {
           aria-label="AI Chat Interface"
         >
           <ChatPanel
-            key={selectedDocument?.doc_id ?? selectedFolder?.id ?? selectedChat?.id ?? "empty"}
+            key={
+              selectedDocument?.doc_id ??
+              selectedFolder?.id ??
+              selectedChat?.id ??
+              "empty"
+            }
             selectedDocument={selectedDocument}
             selectedFolder={selectedFolder}
             selectedChat={selectedChat}

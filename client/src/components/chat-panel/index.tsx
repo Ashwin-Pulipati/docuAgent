@@ -149,8 +149,8 @@ export function ChatPanel({
           {showScrollButton && (
             <Button
               size="icon"
-              variant="secondary"
-              className="absolute -top-14 left-1/2 -translate-x-1/2 z-40 h-10 w-10 rounded-full shadow-lg hover:bg-secondary/90 animate-in fade-in zoom-in duration-200"
+              variant="ghost"
+              className="absolute -top-14 left-1/2 -translate-x-1/2 z-40 h-10 w-10 rounded-full shadow-lg text-secondary bg-secondary/10 animate-in fade-in zoom-in duration-200"
               onClick={scrollToBottom}
               aria-label="Scroll to bottom"
             >

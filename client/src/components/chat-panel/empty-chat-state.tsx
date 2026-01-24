@@ -5,10 +5,10 @@ import type { Document, Folder } from "@/lib/api";
 import { Button } from "../ui/button";
 
 type Props = {
-  selectedDocument?: Document | null;
-  selectedFolder?: Folder | null;
-  onCreateChat?: () => void;
-  disabled?: boolean;
+  readonly selectedDocument?: Document | null;
+  readonly selectedFolder?: Folder | null;
+  readonly onCreateChat?: () => void;
+  readonly disabled?: boolean;
 };
 
 export function EmptyChatState({ selectedDocument, selectedFolder, onCreateChat, disabled }: Props) {

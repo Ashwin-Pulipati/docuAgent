@@ -43,7 +43,7 @@ export const MessageItem = React.memo(function MessageItem({
       {!isUser && (
         <Avatar
           aria-label="AI Assistant"
-          className="h-9 w-9 bg-linear-to-t from-transparent to-primary/50 mt-1 shrink-0"
+          className="h-9 w-9 bg-linear-to-t from-primary/50 via-transparent to-primary/50 mt-1 shrink-0"
         >
           <AvatarImage
             src="/ai.png"
@@ -64,7 +64,7 @@ export const MessageItem = React.memo(function MessageItem({
       >
         <article
           className={cn(
-            "rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm transition-colors wrap-break-word relative z-10",
+            "rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap shadow-sm transition-colors break-words min-w-0 relative z-10",
             "border border-border/50",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isUser
