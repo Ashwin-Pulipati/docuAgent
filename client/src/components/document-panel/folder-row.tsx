@@ -19,6 +19,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 type Props = Readonly<{
@@ -26,6 +27,7 @@ type Props = Readonly<{
   active: boolean;
   selectionMode: boolean;
   selected: boolean;
+  processing: boolean;
   onClick: () => void;
   onToggleSelect: () => void;
   onRename: () => void;
@@ -39,6 +41,7 @@ export function FolderRow({
   active,
   selectionMode,
   selected,
+  processing,
   onClick,
   onToggleSelect,
   onRename,
@@ -71,9 +74,12 @@ export function FolderRow({
           aria-hidden="true"
         />
         <span className="font-medium">{folder.name}</span>
+        {processing && (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-auto" aria-hidden="true" />
+        )}
       </SidebarMenuButton>
 
-      {!selectionMode && (
+      {!selectionMode && !processing && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction

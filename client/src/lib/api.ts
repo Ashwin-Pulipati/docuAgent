@@ -124,6 +124,7 @@ export async function deleteFolder(folderId: number): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
     method: "DELETE",
   });
+  if (res.status === 404) return;
   if (!res.ok) throw new Error("Failed to delete folder");
 }
 

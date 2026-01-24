@@ -79,7 +79,7 @@ export function DocumentRow({
         className={cn(
             "h-auto py-2 pr-8", 
             selected ? "bg-muted" : "",
-            hasChats && "pl-7" // Only add padding if there are chats (for the chevron space)
+            hasChats && "pl-7" 
         )}
         draggable={draggable}
         onDragStart={onDragStart}
@@ -122,7 +122,7 @@ export function DocumentRow({
         </div>
       </SidebarMenuButton>
 
-      {!selectionMode && (
+      {!selectionMode && !ingesting && ["ingested", "completed", "success"].includes((doc.status || "").toLowerCase()) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction

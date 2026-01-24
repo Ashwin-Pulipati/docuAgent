@@ -99,6 +99,7 @@ type Return = Readonly<{
 
   createChatThread: (docId?: number, parentId?: number, folderId?: number) => Promise<void>;
   deleteChatThread: (id: number) => Promise<void>;
+  folderBusySet: Set<number>;
 }>;
 
 export function useDocumentPanel({
@@ -115,6 +116,23 @@ export function useDocumentPanel({
   const [ingestJobs, setIngestJobs] = React.useState<Map<string, IngestJob>>(
     new Map(),
   );
+
+  const optimisticDeletedDocIds = React.useRef(new Set<string>());
+  const optimisticDeletedFolderIds = React.useRef(new Set<number>());
+
+  const folderBusySet = React.useMemo(() => {
+    const busyFolders = new Set<number>();
+    docs.forEach((d) => {
+      const status = (d.status || "").toLowerCase();
+      const isBusy =
+        ingestJobs.has(d.doc_id) ||
+        ["uploaded", "queued", "processing", "ingesting"].includes(status);
+      if (isBusy && d.folder_id) {
+        busyFolders.add(d.folder_id);
+      }
+    });
+    return busyFolders;
+  }, [docs, ingestJobs]);
 
   const [openCreateFolder, setOpenCreateFolder] = React.useState(false);
   const [newFolderName, setNewFolderName] = React.useState("");
@@ -145,13 +163,33 @@ export function useDocumentPanel({
       listFolders(),
       listChats(selectedFolderId ?? undefined),
     ]);
-    setDocs(d);
-    setFolders(f);
+    
+    optimisticDeletedDocIds.current.forEach((id) => {
+      if (!d.some((doc) => doc.doc_id === id)) {
+        optimisticDeletedDocIds.current.delete(id);
+      }
+    });
+    optimisticDeletedFolderIds.current.forEach((id) => {
+      if (!f.some((folder) => folder.id === id)) {
+        optimisticDeletedFolderIds.current.delete(id);
+      }
+    });
+    
+    const filteredDocs = d.filter(
+      (doc) => !optimisticDeletedDocIds.current.has(doc.doc_id),
+    );
+    const filteredFolders = f.filter(
+      (folder) => !optimisticDeletedFolderIds.current.has(folder.id),
+    );
+
+    setDocs(filteredDocs);
+    setFolders(filteredFolders);
     setChats(c);
 
     if (selectedDocument) {
       const updated =
-        d.find((doc) => doc.doc_id === selectedDocument.doc_id) ?? null;
+        filteredDocs.find((doc) => doc.doc_id === selectedDocument.doc_id) ??
+        null;
       if (updated && updated.status !== selectedDocument.status)
         setSelectedDocument(updated);
     }
@@ -447,29 +485,83 @@ export function useDocumentPanel({
         !confirm("Delete folder and all its documents? This cannot be undone.")
       )
         return;
+      
+      optimisticDeletedFolderIds.current.add(id);
+      setFolders((prev) => prev.filter((f) => f.id !== id));
+      toast.success("Folder deleted");
+
+      if (selectedFolder?.id === id) {
+        _setSelectedFolder(null);
+      }
+
       try {
         await deleteFolder(id);
+      } catch (e) {
+        try {
+          const currentFolders = await listFolders();
+          if (currentFolders.some((f) => f.id === id)) {
+            optimisticDeletedFolderIds.current.delete(id); 
+            toast.error("Failed to delete folder (restoring)");
+            console.error(e);
+            await refreshFn(); 
+          } else {
+            setFolders(currentFolders);
+            await refreshFn();
+          }
+        } catch {
+          await refreshFn();
+        }
+        return;
+      }
+      
+      try {
         await refreshFn();
-        toast.success("Folder deleted");
       } catch {
-        toast.error("Failed to delete folder");
+        
       }
     },
-    [refreshFn],
+    [refreshFn, selectedFolder, _setSelectedFolder],
   );
 
   const deleteDocById = React.useCallback(
     async (docId: string) => {
       if (!confirm("Delete document?")) return;
+      
+      optimisticDeletedDocIds.current.add(docId);
+      setDocs((prev) => prev.filter((d) => d.doc_id !== docId));
+      toast.success("Document deleted");
+
+      if (selectedDocument?.doc_id === docId) {
+        setSelectedDocument(null);
+      }
+
       try {
         await deleteDocument(docId);
-        toast.success("Document deleted");
+      } catch (e) {
+        try {
+          const currentDocs = await listDocuments();
+          if (currentDocs.some((d) => d.doc_id === docId)) {
+            optimisticDeletedDocIds.current.delete(docId);
+            toast.error("Failed to delete document (restoring)");
+            console.error(e);
+            await refreshFn();
+          } else {
+            setDocs(currentDocs);
+            await refreshFn();
+          }
+        } catch {
+          await refreshFn();
+        }
+        return;
+      }
+      
+      try {
         await refreshFn();
       } catch {
-        toast.error("Failed to delete");
+        
       }
     },
-    [refreshFn],
+    [refreshFn, selectedDocument, setSelectedDocument],
   );
 
   const bulkDelete = React.useCallback(async () => {
@@ -658,5 +750,6 @@ export function useDocumentPanel({
     handleDragOver,
     createChatThread,
     deleteChatThread,
+    folderBusySet,
   };
 }
