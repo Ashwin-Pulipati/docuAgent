@@ -137,11 +137,11 @@ type Props = Readonly<{
                   variant="ghost"
                   size="icon"
                   onClick={onExitSelectionMode}
-                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary font-bold hover:bg-primary/10"
                   title="Cancel Selection"
                   aria-label="Cancel selection mode"
                 >
-                  <X className="h-4 w-4" aria-hidden="true" />
+                  <X className="size-4.5!" aria-hidden="true" />
                 </Button>
   
                 <Button
@@ -149,11 +149,11 @@ type Props = Readonly<{
                   size="icon"
                   onClick={onBulkDelete}
                   disabled={selectedCount === 0 || busy}
-                  className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10"
+                  className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive font-bold"
                   title={`Delete ${selectedCount} selected items`}
                   aria-label={`Delete ${selectedCount} selected items`}
                 >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  <Trash2 className="size-4.5!" aria-hidden="true" />
                 </Button>
               </>
             ) : (

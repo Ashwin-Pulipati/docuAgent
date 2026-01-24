@@ -15,11 +15,15 @@ export function ChatPanel({
   selectedFolder,
   selectedChat,
   onRenameChat,
+  onCreateChat,
+  isReady = true,
 }: {
   readonly selectedDocument: Document | null;
   readonly selectedFolder: Folder | null;
   readonly selectedChat: ChatThread | null;
   readonly onRenameChat?: (newTitle: string) => void;
+  readonly onCreateChat?: () => void;
+  readonly isReady?: boolean;
 }) {
   const targetName = selectedDocument
     ? selectedDocument.name
@@ -58,7 +62,9 @@ export function ChatPanel({
     });
   }, [messages]);
 
-  if (!selectedDocument && !selectedFolder && !selectedChat) return <EmptyChatState />;
+  if (!selectedChat) {
+      return <EmptyChatState selectedDocument={selectedDocument} selectedFolder={selectedFolder} onCreateChat={onCreateChat} disabled={!isReady} />;
+  }
 
   const disabled = !canAsk || asking || checking || !online || isGenerating;
   const placeholder = canAsk

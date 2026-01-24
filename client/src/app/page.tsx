@@ -21,6 +21,7 @@ export default function Home() {
   );
   const [selectedChat, setSelectedChat] = React.useState<ChatThread | null>(null);
   const sidebarRef = React.useRef<DocumentPanelHandle>(null);
+  const [selectionReady, setSelectionReady] = React.useState(true);
 
   const handleSelectDocument = (doc: Document | null) => {
       setSelectedDocument(doc);
@@ -56,6 +57,14 @@ export default function Home() {
       }
   };
 
+  const handleCreateChat = () => {
+      if (selectedDocument) {
+          sidebarRef.current?.createChat(selectedDocument.id);
+      } else {
+          sidebarRef.current?.createChat();
+      }
+  };
+
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
@@ -84,6 +93,7 @@ export default function Home() {
         setSelectedFolder={handleSelectFolder}
         selectedChat={selectedChat}
         setSelectedChat={handleSelectChat}
+        onSelectionReady={setSelectionReady}
       />
 
       <SidebarInset className="relative flex h-full flex-col overflow-hidden">
@@ -114,6 +124,8 @@ export default function Home() {
             selectedFolder={selectedFolder}
             selectedChat={selectedChat}
             onRenameChat={handleChatRename}
+            onCreateChat={handleCreateChat}
+            isReady={selectionReady}
           />
         </main>
 

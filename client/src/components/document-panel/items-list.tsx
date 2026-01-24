@@ -27,6 +27,7 @@ type Props = Readonly<{
   toggleSelection: (id: SelectionId) => void;
 
   ingestingMap: Map<string, unknown>;
+  folderBusySet: Set<number>;
 
   onSelectFolder: (f: Folder) => void;
   onSelectDoc: (d: Document) => void;
@@ -215,6 +216,7 @@ export function ItemsList({
   hasSelection,
   toggleSelection,
   ingestingMap,
+  folderBusySet,
   onSelectFolder,
   onSelectDoc,
   onSelectChat,
@@ -310,6 +312,7 @@ export function ItemsList({
                 active={selectedFolder?.id === f.id && !selectedDocument && !selectedChat}
                 selectionMode={selectionMode}
                 selected={hasSelection(`f-${f.id}`)}
+                processing={folderBusySet.has(f.id)}
                 onClick={() => {
                   if (selectionMode) toggleSelection(`f-${f.id}`);
                   else onSelectFolder(f);

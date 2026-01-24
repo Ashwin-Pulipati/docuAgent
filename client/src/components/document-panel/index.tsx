@@ -11,6 +11,7 @@ import { RenameDocumentDialog, RenameFolderDialog, RenameChatDialog } from "./re
 
 export interface DocumentPanelHandle {
   refresh: () => void;
+  createChat: (docId?: number, parentId?: number) => Promise<void>;
 }
 
 export const DocumentPanel = forwardRef<DocumentPanelHandle, {
@@ -20,6 +21,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   readonly setSelectedFolder: (f: Folder | null) => void;
   readonly selectedChat: ChatThread | null;
   readonly setSelectedChat: (c: ChatThread | null) => void;
+  readonly onSelectionReady?: (isReady: boolean) => void;
 }>(function DocumentPanel({
   selectedDocument,
   setSelectedDocument,
@@ -27,6 +29,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   setSelectedFolder,
   selectedChat,
   setSelectedChat,
+  onSelectionReady,
 }, ref) {
   const {
     docs,
@@ -50,6 +53,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
     dragHandlers,
 
     ingestJobs,
+    folderBusySet,
 
     busy,
     isRefreshing,
@@ -95,7 +99,35 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
 
   useImperativeHandle(ref, () => ({
     refresh,
+    createChat: createChatThread,
   }));
+
+  React.useEffect(() => {
+    if (!onSelectionReady) return;
+
+    if (selectedDocument) {
+      const liveDoc =
+        docs.find((d) => d.doc_id === selectedDocument.doc_id) ||
+        selectedDocument;
+      const status = (liveDoc.status || "").toLowerCase();
+      const isReady =
+        !ingestJobs.has(selectedDocument.doc_id) &&
+        ["ingested", "completed", "success"].includes(status);
+      onSelectionReady(isReady);
+    } else if (selectedFolder) {
+      const isReady = !folderBusySet.has(selectedFolder.id);
+      onSelectionReady(isReady);
+    } else {
+      onSelectionReady(true);
+    }
+  }, [
+    selectedDocument,
+    selectedFolder,
+    ingestJobs,
+    folderBusySet,
+    onSelectionReady,
+    docs,
+  ]);
 
   return (
     <PanelShell
@@ -124,7 +156,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         newFolderName={newFolderName}
         setNewFolderName={setNewFolderName}
         onCreateFolder={createNewFolder}
-        onCreateChat={() => createChatThread()} // Wrap to avoid passing MouseEvent
+        onCreateChat={() => createChatThread()}
         query={query}
         setQuery={setQuery}
         onUploadFiles={() => fileInputRef.current?.click()}
@@ -168,6 +200,7 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         hasSelection={(id) => selectedIds.has(id)}
         toggleSelection={toggleSelection}
         ingestingMap={ingestJobs}
+        folderBusySet={folderBusySet}
         onSelectFolder={setSelectedFolder}
         onSelectDoc={setSelectedDocument}
         onSelectChat={setSelectedChat}

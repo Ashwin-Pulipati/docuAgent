@@ -207,13 +207,10 @@ export function useAgenticChat({
 
   useInterval(
     () => {
-      // 1. Poll specific known session jobs
       polling.forEach((v, eventId) => {
         void checkJob(eventId, v.idx);
       });
-
-      // 2. Persistent check: If any message in history is "pending", 
-      // trigger a full chat refresh from the server.
+      
       const hasPendingMessages = messages.some(m => m.status === "pending");
       if (hasPendingMessages && selectedChat) {
           getChat(selectedChat.id).then(chat => {
@@ -231,8 +228,7 @@ export function useAgenticChat({
                   } : undefined,
                   status: (m.content === "Analysing" || !m.content) ? "pending" : "complete"
               }));
-              
-              // Only update if something actually changed (e.g. content no longer "Analysing")
+               
               const hasChanged = history.some((m, i) => m.text !== messages[i]?.text || m.status !== messages[i]?.status);
               if (hasChanged) {
                   setMessages(history);
@@ -278,8 +274,8 @@ export function useAgenticChat({
         userText,
         selectedDocument?.doc_id ?? null,
         6,
-        selectedFolder?.id ?? selectedChat?.folder_id ?? null, // Use chat's folder context if available
-        selectedChat?.id ?? null // Pass thread_id
+        selectedFolder?.id ?? selectedChat?.folder_id ?? null,
+        selectedChat?.id ?? null 
       );
 
       const pending = messages[agentIdx];
