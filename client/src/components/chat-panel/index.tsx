@@ -56,8 +56,8 @@ export function ChatPanel({
 
   const [isAtBottom, setIsAtBottom] = React.useState(true);
   const isAtBottomRef = React.useRef(true);
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<HTMLUListElement>(null);
 
   // Handle scroll events
   React.useEffect(() => {
@@ -66,37 +66,47 @@ export function ChatPanel({
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollArea as HTMLElement;
-      
+      // Use a slightly larger threshold (100px) to be more forgiving
       const bottom = scrollHeight - scrollTop - clientHeight < 100;
       isAtBottomRef.current = bottom;
-      if (bottom !== isAtBottom) {
-        setIsAtBottom(bottom);
-      }
+      setIsAtBottom(bottom);
     };
 
     scrollArea.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => scrollArea.removeEventListener("scroll", handleScroll);
-  }, [isAtBottom]);
+  }, []); // Only run on mount
 
-  // Smart auto-scroll - ONLY trigger when messages change
+  // Watch for ANY size change in the message list (new messages, status changes, reactions)
   React.useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    const isUserMessage = lastMsg?.sender === "user";
-    
-    // We only auto-scroll if we were already at the bottom OR the user just sent a message
-    if (isAtBottomRef.current || isUserMessage) {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }
-  }, [messages]);
+    const scrollArea = scrollContainerRef.current?.closest(".overflow-y-auto");
+    const list = listRef.current;
+    if (!scrollArea || !list) return;
+
+    const observer = new ResizeObserver(() => {
+      const lastMsg = messages[messages.length - 1];
+      const isUserMessage = lastMsg?.sender === "user";
+
+      if (isAtBottomRef.current || isUserMessage) {
+        scrollArea.scrollTo({
+          top: scrollArea.scrollHeight,
+          behavior: isUserMessage ? "smooth" : "instant",
+        });
+      }
+    });
+
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [messages]); // Re-bind when messages array changes to check isUserMessage
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
+    const scrollArea = scrollContainerRef.current?.closest(".overflow-y-auto");
+    if (scrollArea) {
+      scrollArea.scrollTo({
+        top: scrollArea.scrollHeight,
+        behavior: "smooth",
+      });
+    }
     isAtBottomRef.current = true;
     setIsAtBottom(true);
   };
@@ -123,9 +133,10 @@ export function ChatPanel({
         </div>
       </div>
 
-      <CardContent className="flex-1 p-0 pb-4">
+      <CardContent className="flex-1 p-0">
         <ul
-          className="space-y-6 p-4 md:px-8"
+          ref={listRef}
+          className="space-y-6 p-4 md:px-8 pb-40"
           role="log"
           aria-live={isGenerating ? "polite" : "off"}
           aria-relevant="additions text"
@@ -146,7 +157,6 @@ export function ChatPanel({
               }
             />
           ))}
-          <div ref={messagesEndRef} />
         </ul>
       </CardContent>
 
