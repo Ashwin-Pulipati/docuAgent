@@ -78,7 +78,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex min-h-screen w-full bg-background text-foreground overflow-x-hidden">
+    <div className="relative flex h-screen w-full bg-background text-foreground overflow-hidden">
       <DocumentPanel
         ref={sidebarRef}
         selectedDocument={selectedDocument}
@@ -90,11 +90,11 @@ export default function Home() {
         onSelectionReady={setSelectionReady}
       />
 
-      <SidebarInset className="relative flex flex-1 flex-col min-w-0">
+      <SidebarInset className="relative flex w-0 flex-1 flex-col min-w-0 h-full overflow-y-auto [scrollbar-gutter:stable]">
         <Header />
 
         {isMobile && selectedDocument && (
-          <div className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-card/30 px-4 backdrop-blur-sm md:hidden">
+          <div className="sticky top-16 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-card/30 px-4 backdrop-blur-sm md:hidden">
             <Button
               type="button"
               variant="ghost"

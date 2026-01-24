@@ -54,46 +54,51 @@ export function ChatPanel({
     onReaction,
   } = useAgenticChat({ selectedDocument, selectedFolder, selectedChat });
 
-  const [userScrolled, setUserScrolled] = React.useState(false);
-  const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const [isAtBottom, setIsAtBottom] = React.useState(true);
+  const isAtBottomRef = React.useRef(true);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Handle scroll events on window
+  // Handle scroll events
   React.useEffect(() => {
+    const scrollArea = scrollContainerRef.current?.closest(".overflow-y-auto");
+    if (!scrollArea) return;
+
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = window.innerHeight;
+      const { scrollTop, scrollHeight, clientHeight } = scrollArea as HTMLElement;
       
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setUserScrolled(!isAtBottom);
-      setShowScrollButton(!isAtBottom);
+      const bottom = scrollHeight - scrollTop - clientHeight < 100;
+      isAtBottomRef.current = bottom;
+      if (bottom !== isAtBottom) {
+        setIsAtBottom(bottom);
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    scrollArea.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollArea.removeEventListener("scroll", handleScroll);
+  }, [isAtBottom]);
 
-  // Smart auto-scroll
+  // Smart auto-scroll - ONLY trigger when messages change
   React.useEffect(() => {
     const lastMsg = messages[messages.length - 1];
     const isUserMessage = lastMsg?.sender === "user";
     
-    // Scroll if we're already at the bottom OR if it's a new user message
-    if (!userScrolled || isUserMessage) {
-      window.scrollTo({
-        top: document.body.scrollHeight,
+    // We only auto-scroll if we were already at the bottom OR the user just sent a message
+    if (isAtBottomRef.current || isUserMessage) {
+      messagesEndRef.current?.scrollIntoView({
         behavior: "smooth",
+        block: "end",
       });
     }
-  }, [messages, userScrolled]);
+  }, [messages]);
 
   const scrollToBottom = () => {
-    window.scrollTo({
-      top: document.body.scrollHeight,
+    messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
+      block: "end",
     });
-    setUserScrolled(false);
-    setShowScrollButton(false);
+    isAtBottomRef.current = true;
+    setIsAtBottom(true);
   };
 
   if (!selectedChat) {
@@ -106,8 +111,8 @@ export function ChatPanel({
     : "Wait for processing…";
 
   return (
-    <Card className="flex flex-col min-h-[calc(100vh-4rem)] border-none bg-transparent shadow-none max-w-7xl mx-auto relative">
-      <div className="sticky top-4 z-30 pointer-events-none flex justify-center">
+    <Card ref={scrollContainerRef} className="flex flex-col min-h-full border-none bg-transparent shadow-none max-w-7xl mx-auto relative">
+      <div className="sticky top-20 z-30 pointer-events-none flex justify-center">
         <div className="pointer-events-auto">
           <ChatHeader
             selectedDocument={selectedDocument}
@@ -141,12 +146,13 @@ export function ChatPanel({
               }
             />
           ))}
+          <div ref={messagesEndRef} />
         </ul>
       </CardContent>
 
       <div className="sticky bottom-20 z-30 pointer-events-none flex justify-center px-4 mt-4">
         <div className="pointer-events-auto w-full max-w-4xl relative">
-          {showScrollButton && (
+          {!isAtBottom && (
             <Button
               size="icon"
               variant="ghost"

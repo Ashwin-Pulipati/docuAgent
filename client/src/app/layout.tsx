@@ -72,7 +72,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${tangerine.variable} ${nunito.variable} ${nunitoSans.variable}`}
     >
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="h-screen overflow-hidden bg-background text-foreground antialiased">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-2xl focus:bg-background focus:px-4 focus:py-2 focus:ring-2 focus:ring-ring"

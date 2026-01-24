@@ -7,17 +7,17 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border/50 bg-card/30 px-4 backdrop-blur-md">
-      <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between">
+    <header className="sticky top-0 z-30 h-18 border-b border-border/50 bg-card/30 px-4 backdrop-blur-md">
+      <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between py-8">
         <div className="flex items-center gap-3">
             <SidebarTrigger />
           <div className="h-6 w-px bg-border/50 mx-1" />
 
           <Link
             href="/"
-            className="group flex items-center gap-3 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl"
+            className="group flex items-center gap-3 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl min-w-0"
           >
-            <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 p-1.5 ring-1 ring-border/50 group-hover:ring-primary/30 transition-all">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 p-1.5 ring-1 ring-border/50 group-hover:ring-primary/30 transition-all">
               <Image
                 src="/logo.png"
                 alt="DocuAgent Logo"
@@ -27,7 +27,7 @@ export default function Header() {
               />
             </div>
 
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <h1 className="text-3xl md:text-4xl font-display font-bold leading-none tracking-tight text-gradient brightness-75">
                 DocuAgent
               </h1>

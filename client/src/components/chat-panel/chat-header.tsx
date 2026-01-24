@@ -50,12 +50,12 @@ export function ChatHeader({
       : "outline";
 
   return (
-    <div className="mx-auto w-fit max-w-xl rounded-full border border-border/40 bg-background/60 px-4 py-1 shadow-sm backdrop-blur-xl transition-all hover:bg-background/80 hover:shadow-md">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto w-fit max-w-full rounded-full border border-border/40 bg-background/60 px-4 py-1 shadow-sm backdrop-blur-xl transition-all hover:bg-background/80 hover:shadow-md min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <h2 className="bg-linear-to-br from-foreground to-muted-foreground bg-clip-text text-lg font-semibold text-transparent truncate cursor-default max-w-50 md:max-w-75">
+              <h2 className="bg-linear-to-br from-foreground to-muted-foreground bg-clip-text text-lg font-semibold text-transparent truncate cursor-default max-w-32 sm:max-w-60 md:max-w-48 lg:max-w-75">
                 {targetName}
               </h2>
             </TooltipTrigger>
