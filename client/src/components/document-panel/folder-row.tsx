@@ -50,7 +50,7 @@ export function FolderRow({
   onDrop,
 }: Props) {
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="py-0.5">
       <SidebarMenuButton
         isActive={active}
         onClick={onClick}

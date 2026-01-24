@@ -26,7 +26,8 @@ from app.api.schemas import (
     ChatThreadCreate,
     ChatThreadUpdate,
     ChatThreadResponse,
-    ChatMessageResponse
+    ChatMessageResponse,
+    ReactionCreate
 )
 
 router = APIRouter()
@@ -262,10 +263,11 @@ def list_documents(response: Response):
 def create_chat(req: ChatThreadCreate):
     with Session(engine) as session:
         repo = ChatRepo(session)
-        thread = repo.create_thread(req.title or "New Chat", req.folder_id, req.document_id, req.parent_id)
+        thread = repo.create_thread(req.title or "New Chat", req.folder_id, req.document_id, req.parent_id, req.is_starred)
         return ChatThreadResponse(
             id=thread.id,
             title=thread.title,
+            is_starred=thread.is_starred,
             folder_id=thread.folder_id,
             document_id=thread.document_id,
             parent_id=thread.parent_id,
@@ -285,6 +287,7 @@ def list_chats(response: Response, folder_id: Optional[int] = None, document_id:
             ChatThreadResponse(
                 id=t.id,
                 title=t.title,
+                is_starred=t.is_starred,
                 folder_id=t.folder_id,
                 document_id=t.document_id,
                 parent_id=t.parent_id,
@@ -309,6 +312,7 @@ def get_chat(thread_id: int):
         return ChatThreadResponse(
             id=thread.id,
             title=thread.title,
+            is_starred=thread.is_starred,
             folder_id=thread.folder_id,
             document_id=thread.document_id,
             parent_id=thread.parent_id,
@@ -320,6 +324,7 @@ def get_chat(thread_id: int):
                     role=m.role,
                     content=m.content,
                     citations=m.citations,
+                    reactions=m.reactions,
                     created_at=str(m.created_at)
                 ) for m in msgs
             ]
@@ -329,19 +334,37 @@ def get_chat(thread_id: int):
 def update_chat(thread_id: int, req: ChatThreadUpdate):
     with Session(engine) as session:
         repo = ChatRepo(session)
-        thread = repo.update_thread(thread_id, req.title)
+        thread = repo.update_thread(thread_id, req.title, req.is_starred)
         if not thread:
             raise HTTPException(status_code=404, detail="Chat not found")
         
         return ChatThreadResponse(
             id=thread.id,
             title=thread.title,
+            is_starred=thread.is_starred,
             folder_id=thread.folder_id,
             document_id=thread.document_id,
             parent_id=thread.parent_id,
             created_at=str(thread.created_at),
             updated_at=str(thread.updated_at),
             messages=[]
+        )
+
+@router.post("/chats/messages/{message_id}/reaction", response_model=ChatMessageResponse)
+def add_reaction(message_id: int, req: ReactionCreate):
+    with Session(engine) as session:
+        repo = ChatRepo(session)
+        msg = repo.add_reaction(message_id, req.emoji, role="user")
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        return ChatMessageResponse(
+            id=msg.id,
+            role=msg.role,
+            content=msg.content,
+            citations=msg.citations,
+            reactions=msg.reactions,
+            created_at=str(msg.created_at)
         )
 
 @router.delete("/chats/{thread_id}")

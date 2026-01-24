@@ -66,6 +66,8 @@ class ChatThread(SQLModel, table=True):
         }
     )
 
+    is_starred: bool = Field(default=False)
+
     messages: List["ChatMessage"] = Relationship(back_populates="thread", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
     created_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
@@ -85,6 +87,9 @@ class ChatMessage(SQLModel, table=True):
     
     # Store citations as a list of JSON objects
     citations: Optional[List[dict]] = Field(default=None, sa_column=Column(JSON))
+    
+    # Store reactions as a list of JSON objects: [{"emoji": "👍", "count": 1, "user_reacted": true}]
+    reactions: Optional[List[dict]] = Field(default=None, sa_column=Column(JSON))
 
     created_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
 

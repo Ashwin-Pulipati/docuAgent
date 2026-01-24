@@ -55,7 +55,7 @@ export function DocumentRow({
   onDragStart,
 }: Props) {
   return (
-    <SidebarMenuItem className="relative">
+    <SidebarMenuItem className="relative py-0.5">
       <Button
         variant="ghost"
         size="icon"

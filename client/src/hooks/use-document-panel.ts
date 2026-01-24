@@ -97,9 +97,10 @@ type Return = Readonly<{
   handleDropOnRoot: (e: React.DragEvent) => void;
   handleDragOver: (e: React.DragEvent) => void;
 
-  createChatThread: (docId?: number, parentId?: number, folderId?: number) => Promise<void>;
+  createChatThread: (docId?: number, parentId?: number, folderId?: number) => Promise<ChatThread | undefined>;
   deleteChatThread: (id: number) => Promise<void>;
   folderBusySet: Set<number>;
+  toggleChatStar: (chat: ChatThread) => Promise<void>;
 }>;
 
 export function useDocumentPanel({
@@ -163,18 +164,8 @@ export function useDocumentPanel({
       listFolders(),
       listChats(selectedFolderId ?? undefined),
     ]);
-    
-    optimisticDeletedDocIds.current.forEach((id) => {
-      if (!d.some((doc) => doc.doc_id === id)) {
-        optimisticDeletedDocIds.current.delete(id);
-      }
-    });
-    optimisticDeletedFolderIds.current.forEach((id) => {
-      if (!f.some((folder) => folder.id === id)) {
-        optimisticDeletedFolderIds.current.delete(id);
-      }
-    });
-    
+
+    // Filter out optimistically deleted items to prevent flicker
     const filteredDocs = d.filter(
       (doc) => !optimisticDeletedDocIds.current.has(doc.doc_id),
     );
@@ -250,10 +241,33 @@ export function useDocumentPanel({
 
   const toggleSelection = React.useCallback(
     (id: SelectionId) => {
-      if (has(id)) remove(id);
-      else add(id);
+      const isSelected = has(id);
+      if (isSelected) {
+        remove(id);
+        // If it's a document, deselect its chats
+        if (id.startsWith("d-")) {
+            const docIdStr = id.substring(2);
+            // find doc to get its numeric id
+            const doc = docs.find(d => d.doc_id === docIdStr);
+            if (doc && doc.id) {
+                const docChats = chats.filter(c => c.document_id === doc.id);
+                docChats.forEach(c => remove(`c-${c.id}`));
+            }
+        }
+      } else {
+        add(id);
+        // If it's a document, select its chats
+        if (id.startsWith("d-")) {
+            const docIdStr = id.substring(2);
+            const doc = docs.find(d => d.doc_id === docIdStr);
+            if (doc && doc.id) {
+                const docChats = chats.filter(c => c.document_id === doc.id);
+                docChats.forEach(c => add(`c-${c.id}`));
+            }
+        }
+      }
     },
-    [add, has, remove],
+    [add, has, remove, docs, chats],
   );
 
   const enterSelectionMode = React.useCallback(
@@ -569,12 +583,20 @@ export function useDocumentPanel({
     if (!confirm(`Delete ${selectedIds.size} item(s)?`)) return;
 
     let failed = 0;
+    const deletedDocIds = new Set<string>();
+    const deletedFolderIds = new Set<number>();
+
     for (const id of Array.from(selectedIds)) {
       try {
-        if (id.startsWith("f-"))
-          await deleteFolder(Number.parseInt(id.substring(2)));
-        else if (id.startsWith("d-")) await deleteDocument(id.substring(2));
-        else if (id.startsWith("c-")) await deleteChat(Number.parseInt(id.substring(2)));
+        if (id.startsWith("f-")) {
+          const fid = Number.parseInt(id.substring(2));
+          await deleteFolder(fid);
+          deletedFolderIds.add(fid);
+        } else if (id.startsWith("d-")) {
+            const did = id.substring(2);
+            await deleteDocument(did);
+            deletedDocIds.add(did);
+        } else if (id.startsWith("c-")) await deleteChat(Number.parseInt(id.substring(2)));
       } catch {
         failed++;
       }
@@ -583,10 +605,17 @@ export function useDocumentPanel({
     if (failed > 0) toast.error(`Failed to delete ${failed} items.`);
     else toast.success("Selected items deleted.");
 
+    if (selectedDocument && deletedDocIds.has(selectedDocument.doc_id)) {
+        setSelectedDocument(null);
+    }
+    if (selectedFolder && deletedFolderIds.has(selectedFolder.id)) {
+        _setSelectedFolder(null);
+    }
+
     reset();
     toggleSelectionMode(false);
     await refreshFn();
-  }, [reset, selectedIds, toggleSelectionMode, refreshFn]);
+  }, [reset, selectedIds, toggleSelectionMode, refreshFn, selectedDocument, setSelectedDocument, selectedFolder, _setSelectedFolder]);
 
   const handleMoveDoc = React.useCallback(
     async (docId: string, targetFolderId: number | null) => {
@@ -666,9 +695,10 @@ export function useDocumentPanel({
             : selectedFolderId ?? undefined
           );
           
-          await createChat("New Chat", finalFolderId, docId, parentId);
+          const newChat = await createChat("New Chat", finalFolderId, docId, parentId);
           await refreshFn();
           toast.success("New chat created");
+          return newChat;
       } catch {
           toast.error("Failed to create chat");
       }
@@ -696,6 +726,16 @@ export function useDocumentPanel({
           toast.error("Failed to delete chat");
       }
   }, [refreshFn]);
+
+  const toggleChatStar = React.useCallback(async (chat: ChatThread) => {
+      try {
+          const updated = await updateChat(chat.id, undefined, !chat.is_starred);
+          setChats(prev => prev.map(c => c.id === chat.id ? updated : c));
+          toast.success(updated.is_starred ? "Chat starred" : "Chat unstarred");
+      } catch {
+          toast.error("Failed to update chat");
+      }
+  }, []);
 
   const busy = uploading;
   const isRefreshing = ingestJobs.size > 0 || hasActiveDocs;
@@ -751,5 +791,6 @@ export function useDocumentPanel({
     createChatThread,
     deleteChatThread,
     folderBusySet,
+    toggleChatStar,
   };
 }

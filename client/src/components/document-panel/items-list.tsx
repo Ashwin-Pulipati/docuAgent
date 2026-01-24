@@ -6,7 +6,7 @@ import { SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, S
 import { FolderRow } from "./folder-row";
 import { DocumentRow } from "./document-row";
 import type { SelectionId } from "@/lib/types";
-import { MessageSquare, MoreVertical, Pencil, Trash2, MessageSquarePlus, CornerDownRight, ChevronRight } from "lucide-react";
+import { MessageSquare, MoreVertical, Pencil, Trash2, MessageSquarePlus, CornerDownRight, ChevronRight, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ type Props = Readonly<{
 
   onRenameChat: (c: ChatThread) => void;
   onDeleteChat: (id: number) => void;
+  onToggleStar: (c: ChatThread) => void;
   onCreateChatThread: (docId?: number, parentId?: number) => void;
 
   onDragOver: (e: React.DragEvent) => void;
@@ -59,9 +60,12 @@ function ChatRow({
     onSelectChat,
     onRenameChat,
     onDeleteChat,
+    onToggleStar,
     onCreateChatThread,
     depth = 0,
-    allowBranching = true
+    allowBranching = true,
+    isLast = false,
+    ancestorContinuations = [],
 }: {
     readonly chat: ChatThread;
     readonly chatsByParentId: Map<number, ChatThread[]>;
@@ -72,35 +76,90 @@ function ChatRow({
     readonly onSelectChat: (c: ChatThread) => void;
     readonly onRenameChat: (c: ChatThread) => void;
     readonly onDeleteChat: (id: number) => void;
+    readonly onToggleStar: (c: ChatThread) => void;
     readonly onCreateChatThread: (docId?: number, parentId?: number) => void;
     readonly depth?: number;
     readonly allowBranching?: boolean;
+    readonly isLast?: boolean;
+    readonly ancestorContinuations?: boolean[];
 }) {
     const children = chatsByParentId.get(chat.id) || [];
     const isSelected = selectedChat?.id === chat.id;
     const isChecked = hasSelection(`c-${chat.id}`);
     const [isExpanded, setIsExpanded] = React.useState(false);
     const hasChildren = children.length > 0;
-    const paddingLeft = depth * 12 + 12;
+    
+    // Layout constants for precise alignment
+    const indentSize = 20; 
+    const baseOffset = 8;
+    
+    // The main content margin (pushes the button to the right)
+    const contentMargin = depth * indentSize + baseOffset;
+    
+    // The vertical track position for this depth level
+    const trackX = (depth - 1) * indentSize + baseOffset + 8;
 
     return (
         <>
-            <SidebarMenuItem className="relative">
+            <SidebarMenuItem className="relative group py-0.5">
+                {/* Thread Guidelines (Vertical lines for ancestors) */}
+                {ancestorContinuations.map((isActive, index) => (
+                    isActive && (
+                        <div
+                            key={index}
+                            className="absolute top-0 bottom-0 border-l-[1.5px] border-muted-foreground/30"
+                            style={{ 
+                                left: `${index * indentSize + baseOffset + 8}px`
+                            }}
+                            aria-hidden="true"
+                        />
+                    )
+                ))}
+
+                {/* This Row's Connector (Curved L-shape) */}
+                {depth > 0 && (
+                    <>
+                        {/* Top Curve (Always present) */}
+                        <div 
+                            className="absolute border-l-[1.5px] border-b-[1.5px] border-muted-foreground/30 rounded-bl-lg" 
+                            style={{ 
+                                left: `${trackX}px`,
+                                top: 0,
+                                width: `${contentMargin - trackX}px`,
+                                height: '50%'
+                            }} 
+                            aria-hidden="true"
+                        />
+                        {/* Bottom Continuation (Only if not last) */}
+                        {!isLast && (
+                            <div 
+                                className="absolute border-l-[1.5px] border-muted-foreground/30" 
+                                style={{ 
+                                    left: `${trackX}px`,
+                                    top: '50%',
+                                    bottom: 0
+                                }} 
+                                aria-hidden="true"
+                            />
+                        )}
+                    </>
+                )}
+
                 {hasChildren && (
                     <Button
                         variant="ghost"
                         size="icon"
                         className={cn(
-                            "absolute top-1/2 -translate-y-1/2 z-20 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-accent/20 cursor-pointer text-muted-foreground hover:text-accent"
+                            "absolute top-1/2 -translate-y-1/2 z-20 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-accent/20 cursor-pointer text-muted-foreground hover:text-accent p-0"
                         )}
-                        style={{ left: `${paddingLeft - 8}px` }}
+                        style={{ left: `${contentMargin - 16}px` }}
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsExpanded(!isExpanded);
                         }}
                         role="button"
                     >
-                        <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
+                        <ChevronRight className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-90")} />
                     </Button>
                 )}
 
@@ -111,11 +170,14 @@ function ChatRow({
                         else onSelectChat(chat);
                     }}
                     className={cn(
-                        "h-auto py-2 pr-8", 
+                        "h-auto py-2 pr-8 transition-colors my-0.5", 
                         isChecked ? "bg-muted" : ""
                     )}
                     title={chat.title}
-                    style={{ paddingLeft: `${paddingLeft + (hasChildren ? 12 : 12)}px` }}
+                    style={{ 
+                        marginLeft: `${contentMargin}px`,
+                        width: `calc(100% - ${contentMargin}px)`
+                    }}
                 >
                     {selectionMode && (
                         <Checkbox
@@ -127,16 +189,28 @@ function ChatRow({
                         />
                     )}
                     
-                    {/* Indentation/Connector icon when no children */}
-                    {depth > 0 && !hasChildren && (
-                         <CornerDownRight className="h-3 w-3 text-muted-foreground shrink-0 mr-1" aria-hidden="true" />
-                    )}
-                    
                     {!hasChildren && depth === 0 && (
                          <MessageSquare className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
                     )}
 
-                    <span className="font-medium truncate text-sm">{chat.title}</span>
+                    <span className="font-medium truncate text-sm flex-1">{chat.title}</span>
+                    
+                    <div 
+                        role="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleStar(chat);
+                        }}
+                        className={cn(
+                            "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-sm hover:bg-background/50 ml-2 mr-2 shrink-0 z-30",
+                            chat.is_starred && "opacity-100"
+                        )}
+                        aria-label={chat.is_starred ? "Unstar chat" : "Star chat"}
+                    >
+                        <Star 
+                            className={cn("h-3.5 w-3.5", chat.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} 
+                        />
+                    </div>
                 </SidebarMenuButton>
 
                 {!selectionMode && (
@@ -184,7 +258,7 @@ function ChatRow({
                     </DropdownMenu>
                 )}
             </SidebarMenuItem>
-            {isExpanded && children.map(child => (
+            {isExpanded && children.map((child, index) => (
                 <ChatRow
                     key={`chat-${child.id}`}
                     chat={child}
@@ -196,9 +270,12 @@ function ChatRow({
                     onSelectChat={onSelectChat}
                     onRenameChat={onRenameChat}
                     onDeleteChat={onDeleteChat}
+                    onToggleStar={onToggleStar}
                     onCreateChatThread={onCreateChatThread}
                     depth={depth + 1}
                     allowBranching={allowBranching}
+                    isLast={index === children.length - 1}
+                    ancestorContinuations={[...ancestorContinuations, !isLast]}
                 />
             ))}
         </>
@@ -226,6 +303,7 @@ export function ItemsList({
   onDeleteDoc,
   onRenameChat,
   onDeleteChat,
+  onToggleStar,
   onCreateChatThread,
   onDragOver,
   onDropOnFolder,
@@ -279,7 +357,7 @@ export function ItemsList({
           <SidebarGroup className="py-4">
             <SidebarGroupLabel className="mb-2 px-2">Folder-level Chats</SidebarGroupLabel>
             <SidebarGroupContent>
-                <SidebarMenu className="gap-2 px-0">
+                <SidebarMenu className="gap-0 px-0">
                     {independentChats.map((c) => (
                         <ChatRow 
                             key={`chat-${c.id}`} 
@@ -292,6 +370,7 @@ export function ItemsList({
                             onSelectChat={onSelectChat}
                             onRenameChat={onRenameChat}
                             onDeleteChat={onDeleteChat}
+                            onToggleStar={onToggleStar}
                             onCreateChatThread={onCreateChatThread}
                             allowBranching={false}
                         />
@@ -304,7 +383,7 @@ export function ItemsList({
       <SidebarGroup className="py-4">
         <SidebarGroupLabel className="mb-2 px-2">Documents & Folders</SidebarGroupLabel>
         <SidebarGroupContent>
-          <SidebarMenu className="gap-2 px-0">
+          <SidebarMenu className="gap-0 px-0">
             {folders.map((f) => (
               <FolderRow
                 key={`folder-${f.id}`}
@@ -360,7 +439,7 @@ export function ItemsList({
                         draggable={!selectionMode}
                         onDragStart={(e) => onDragStartDoc(e, d.doc_id)}
                     />
-                    {isExpanded && docChats.map(c => (
+                    {isExpanded && docChats.map((c, index) => (
                         <ChatRow 
                             key={`chat-${c.id}`} 
                             chat={c}
@@ -372,8 +451,11 @@ export function ItemsList({
                             onSelectChat={onSelectChat}
                             onRenameChat={onRenameChat}
                             onDeleteChat={onDeleteChat}
+                            onToggleStar={onToggleStar}
                             onCreateChatThread={onCreateChatThread}
                             depth={1}
+                            isLast={index === docChats.length - 1}
+                            ancestorContinuations={[]}
                         />
                     ))}
                 </React.Fragment>

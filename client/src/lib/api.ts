@@ -38,6 +38,7 @@ export const AgenticResultSchema = z.object({
   sources: z.array(z.string()).optional().default([]),
   needs_clarification: z.boolean().optional().default(false),
   clarifying_question: z.string().nullable().optional(),
+  message_id: z.number().nullable().optional(),
   num_contexts: z.number().optional().default(0),
 });
 export type AgenticResult = z.infer<typeof AgenticResultSchema>;
@@ -57,11 +58,19 @@ export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 
 // --- Chat Schemas ---
 
+export const ReactionSchema = z.object({
+  emoji: z.string(),
+  count: z.number(),
+  user_reacted: z.boolean(),
+});
+export type Reaction = z.infer<typeof ReactionSchema>;
+
 export const ChatMessageSchema = z.object({
   id: z.number(),
   role: z.string(),
   content: z.string(),
   citations: z.array(CitationSchema).nullable().optional(),
+  reactions: z.array(ReactionSchema).nullable().optional().default([]),
   created_at: z.string(),
 });
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
@@ -69,6 +78,7 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export const ChatThreadSchema = z.object({
   id: z.number(),
   title: z.string(),
+  is_starred: z.boolean().default(false),
   folder_id: z.number().nullable().optional(),
   document_id: z.number().nullable().optional(),
   parent_id: z.number().nullable().optional(),
@@ -245,7 +255,8 @@ export async function createChat(
   title?: string, 
   folderId?: number, 
   documentId?: number, 
-  parentId?: number
+  parentId?: number,
+  isStarred: boolean = false
 ): Promise<ChatThread> {
   const res = await fetch(`${API_BASE_URL}/chats`, {
     method: "POST",
@@ -254,7 +265,8 @@ export async function createChat(
       title, 
       folder_id: folderId,
       document_id: documentId,
-      parent_id: parentId
+      parent_id: parentId,
+      is_starred: isStarred
     }),
   });
   if (!res.ok) throw new Error("Failed to create chat");
@@ -269,11 +281,15 @@ export async function getChat(threadId: number): Promise<ChatThread> {
   return ChatThreadSchema.parse(data);
 }
 
-export async function updateChat(threadId: number, title: string): Promise<ChatThread> {
+export async function updateChat(threadId: number, title?: string, isStarred?: boolean): Promise<ChatThread> {
+  const body: Record<string, any> = {};
+  if (title !== undefined) body.title = title;
+  if (isStarred !== undefined) body.is_starred = isStarred;
+
   const res = await fetch(`${API_BASE_URL}/chats/${threadId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to update chat");
   const data = await res.json();
@@ -285,4 +301,15 @@ export async function deleteChat(threadId: number): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete chat");
+}
+
+export async function addReaction(messageId: number, emoji: string): Promise<ChatMessage> {
+  const res = await fetch(`${API_BASE_URL}/chats/messages/${messageId}/reaction`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emoji }),
+  });
+  if (!res.ok) throw new Error("Failed to add reaction");
+  const data = await res.json();
+  return ChatMessageSchema.parse(data);
 }

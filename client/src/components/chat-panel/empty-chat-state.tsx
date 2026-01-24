@@ -16,7 +16,7 @@ export function EmptyChatState({ selectedDocument, selectedFolder, onCreateChat,
   
   if (target) {
     return (
-      <div className="glass-panel flex h-full flex-col items-center justify-center rounded-2xl border border-border/50 p-8 text-center">
+      <div className="glass-panel flex h-full flex-col items-center justify-center border border-border/50 p-8 text-center">
         <div className="mb-4 rounded-2xl bg-muted/50 p-4 bg-gradient">
            <MessageSquarePlus className="h-9 w-9 text-muted-foreground" aria-hidden="true" />
         </div>
@@ -35,20 +35,22 @@ export function EmptyChatState({ selectedDocument, selectedFolder, onCreateChat,
           )}
         </p>
         {onCreateChat && (
-            <button 
+          <Button 
+            variant="ghost"
+            size="lg"
                 onClick={onCreateChat} 
                 disabled={disabled}
-                className="mt-6 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                className="mt-6 text-primary font-bold bg-primary/10 rounded-full"
             >
                 {disabled ? "Please Wait" : "Create New Chat"}
-            </button>
+            </Button>
         )}
       </div>
     );
   }
 
   return (
-    <div className="glass-panel flex h-full flex-col items-center justify-center rounded-2xl border border-border/50 p-8 text-center">
+    <div className="glass-panel flex h-full flex-col items-center justify-center border border-border/50 p-8 text-center">
       <div className="mb-4 rounded-2xl bg-muted/50 p-4 bg-gradient">
         <FileText className="h-9 w-9 text-muted-foreground" aria-hidden="true" />
       </div>
