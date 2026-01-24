@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMedia } from "react-use";
 import { cn } from "@/lib/utils";
 
 const THEME_OPTIONS = [
@@ -77,7 +78,8 @@ function ThemeToggleButton({
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, systemTheme } = useTheme();
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
+  const isMd = useMedia("(min-width: 768px) and (max-width: 1024px)", false);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
@@ -112,7 +114,7 @@ export default function ThemeToggle() {
     );
   }
 
-  if (isMobile) {
+  if (isMobile || (isMd && state === "expanded")) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

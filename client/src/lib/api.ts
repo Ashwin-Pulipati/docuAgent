@@ -278,7 +278,7 @@ export async function getChat(threadId: number): Promise<ChatThread> {
 }
 
 export async function updateChat(threadId: number, title?: string, isStarred?: boolean): Promise<ChatThread> {
-  const body: Record<string, any> = {};
+  const body: { title?: string; is_starred?: boolean } = {};
   if (title !== undefined) body.title = title;
   if (isStarred !== undefined) body.is_starred = isStarred;
 
