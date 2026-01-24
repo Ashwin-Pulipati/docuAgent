@@ -8,7 +8,7 @@
   <p align="center">
     An intelligent, Agentic RAG-powered document assistant for seamless querying, summarization, and extraction from PDFs.
     <br />
-    <a href="https://github.com/Ashwin-Pulipati/docuAgent"><strong>View Demo »</strong></a>
+    <a href="https://docuagent.vercel.app"><strong>View Demo »</strong></a>
   </p>
 </div>
 
