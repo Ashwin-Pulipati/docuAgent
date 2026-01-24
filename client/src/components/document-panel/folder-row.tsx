@@ -58,25 +58,28 @@ export function FolderRow({
         onDrop={onDrop}
         className={`h-auto py-2 ${selected ? "bg-muted" : ""}`}
         title={folder.name}
+        asChild
       >
-        {selectionMode && (
-          <Checkbox
-            checked={selected}
-            onCheckedChange={onToggleSelect}
-            className="mr-2"
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Select folder ${folder.name}`}
-          />
-        )}
+        <div className="flex w-full items-center gap-2">
+            {selectionMode && (
+            <Checkbox
+                checked={selected}
+                onCheckedChange={onToggleSelect}
+                className="mr-2"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Select folder ${folder.name}`}
+            />
+            )}
 
-        <FolderIcon
-          className="h-4 w-4 text-chart-3 shrink-0"
-          aria-hidden="true"
-        />
-        <span className="font-medium">{folder.name}</span>
-        {processing && (
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-auto" aria-hidden="true" />
-        )}
+            <FolderIcon
+            className="h-4 w-4 text-chart-3 shrink-0"
+            aria-hidden="true"
+            />
+            <span className="font-medium">{folder.name}</span>
+            {processing && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-auto" aria-hidden="true" />
+            )}
+        </div>
       </SidebarMenuButton>
 
       {!selectionMode && !processing && (

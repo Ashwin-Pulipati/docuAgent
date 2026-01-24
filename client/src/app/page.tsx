@@ -4,7 +4,6 @@ import * as React from "react";
 import { useTitle, useWindowSize } from "react-use";
 import { DocumentPanel, type DocumentPanelHandle } from "@/components/document-panel";
 import { ChatPanel } from "@/components/chat-panel";
-import { Toaster } from "@/components/ui/sonner";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import type { Document, Folder, ChatThread } from "@/lib/api";
@@ -126,8 +125,6 @@ export default function Home() {
 
         <Footer />
       </SidebarInset>
-
-      <Toaster position="top-center" />
     </div>
   );
 }

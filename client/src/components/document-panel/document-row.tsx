@@ -84,41 +84,44 @@ export function DocumentRow({
         draggable={draggable}
         onDragStart={onDragStart}
         title={doc.name}
+        asChild
       >
-        {selectionMode && (
-          <Checkbox
-            checked={selected}
-            onCheckedChange={onToggleSelect}
-            className="mr-2"
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Select document ${doc.name}`}
-          />
-        )}
-
-        <FileText
-          className="h-4 w-4 text-chart-5 shrink-0"
-          aria-hidden="true"
-        />
-
-        <div className="flex min-w-0 flex-1 items-center gap-1 py-1.5">
-          <span className="truncate text-sm font-medium leading-none">
-            {doc.name}
-          </span>
-
-          <div className="relative -top-1.5 left-0.5 flex shrink-0 items-center gap-1">
-            <Badge
-              variant={statusTone(doc.status)}
-              className="h-3.5 px-1 text-[9px] uppercase"
-            >
-              {friendlyStatus(doc.status)}
-            </Badge>
-            {ingesting && (
-              <Loader2
-                className="h-3 w-3 animate-spin"
-                aria-label="Processing"
-              />
+        <div className="flex w-full items-center gap-2">
+            {selectionMode && (
+            <Checkbox
+                checked={selected}
+                onCheckedChange={onToggleSelect}
+                className="mr-2"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Select document ${doc.name}`}
+            />
             )}
-          </div>
+
+            <FileText
+            className="h-4 w-4 text-chart-5 shrink-0"
+            aria-hidden="true"
+            />
+
+            <div className="flex min-w-0 flex-1 items-center gap-1 py-1.5">
+            <span className="truncate text-sm font-medium leading-none">
+                {doc.name}
+            </span>
+
+            <div className="relative -top-1.5 left-0.5 flex shrink-0 items-center gap-1">
+                <Badge
+                variant={statusTone(doc.status)}
+                className="h-3.5 px-1 text-[9px] uppercase"
+                >
+                {friendlyStatus(doc.status)}
+                </Badge>
+                {ingesting && (
+                <Loader2
+                    className="h-3 w-3 animate-spin"
+                    aria-label="Processing"
+                />
+                )}
+            </div>
+            </div>
         </div>
       </SidebarMenuButton>
 

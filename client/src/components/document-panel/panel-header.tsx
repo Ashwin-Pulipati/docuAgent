@@ -137,7 +137,7 @@ type Props = Readonly<{
                   variant="ghost"
                   size="icon"
                   onClick={onExitSelectionMode}
-                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary font-bold hover:bg-primary/10"
+                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive font-bold hover:bg-destructive/10"
                   title="Cancel Selection"
                   aria-label="Cancel selection mode"
                 >

@@ -33,7 +33,9 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 
 - **Agentic RAG:** sophisticated retrieval augmented generation that understands intent (QA, Summarize, Extract) for more accurate results.
 - **Document & Folder Management:** Organize your PDFs into folders and chat with individual documents or entire collections.
+- **System Monitoring:** Built-in sensors for network status (offline/online detection) and device battery health to ensure uninterrupted workflows.
 - **Branched Chat History:** Create multiple chat threads per document, rename them, and branch conversations to explore different topics without losing context.
+- **Modern UX:** Enterprise-grade Neumorphic Glassmorphism design system with fluid animations and responsive accessibility.
 - **Smart Citations:** Every answer comes with clickable citations that highlight the exact source text and page number.
 - **Context-Aware Sidebar:** A dynamic sidebar that adapts to your selection, showing relevant chats and document hierarchies.
 - Background Processing: Seamless document ingestion and embedding handled by robust background jobs.

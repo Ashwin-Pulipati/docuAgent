@@ -178,38 +178,41 @@ function ChatRow({
                         marginLeft: `${contentMargin}px`,
                         width: `calc(100% - ${contentMargin}px)`
                     }}
+                    asChild
                 >
-                    {selectionMode && (
-                        <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={() => toggleSelection(`c-${chat.id}`)}
-                            className="mr-2"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Select chat ${chat.title}`}
-                        />
-                    )}
-                    
-                    {!hasChildren && depth === 0 && (
-                         <MessageSquare className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-                    )}
-
-                    <span className="font-medium truncate text-sm flex-1">{chat.title}</span>
-                    
-                    <div 
-                        role="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleStar(chat);
-                        }}
-                        className={cn(
-                            "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-sm hover:bg-background/50 ml-2 mr-2 shrink-0 z-30",
-                            chat.is_starred && "opacity-100"
+                    <div className="flex w-full items-center gap-2">
+                        {selectionMode && (
+                            <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={() => toggleSelection(`c-${chat.id}`)}
+                                className="mr-2"
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={`Select chat ${chat.title}`}
+                            />
                         )}
-                        aria-label={chat.is_starred ? "Unstar chat" : "Star chat"}
-                    >
-                        <Star 
-                            className={cn("h-3.5 w-3.5", chat.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} 
-                        />
+                        
+                        {!hasChildren && depth === 0 && (
+                            <MessageSquare className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                        )}
+
+                        <span className="font-medium truncate text-sm flex-1">{chat.title}</span>
+                        
+                        <div 
+                            role="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleStar(chat);
+                            }}
+                            className={cn(
+                                "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-sm hover:bg-background/50 ml-2 mr-2 shrink-0 z-30",
+                                chat.is_starred && "opacity-100"
+                            )}
+                            aria-label={chat.is_starred ? "Unstar chat" : "Star chat"}
+                        >
+                            <Star 
+                                className={cn("h-3.5 w-3.5", chat.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} 
+                            />
+                        </div>
                     </div>
                 </SidebarMenuButton>
 

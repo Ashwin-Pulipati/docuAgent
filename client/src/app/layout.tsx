@@ -3,6 +3,8 @@ import { Nunito, Nunito_Sans, Tangerine } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { SystemMonitor } from "@/components/system-monitor";
 
 const tangerine = Tangerine({
   variable: "--font-tangerine",
@@ -84,7 +86,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>{children}</SidebarProvider>
+          <SidebarProvider>
+            {children}
+            <SystemMonitor />
+            <Toaster position="top-center" />
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

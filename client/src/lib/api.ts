@@ -56,8 +56,6 @@ export const QueryResponseSchema = z.object({
 });
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 
-// --- Chat Schemas ---
-
 export const ReactionSchema = z.object({
   emoji: z.string(),
   count: z.number(),
@@ -238,8 +236,6 @@ export async function getJobStatus(
   const data = await res.json();
   return JobStatusResponseSchema.parse(data);
 }
-
-// --- Chat API Functions ---
 
 export async function listChats(folderId?: number): Promise<ChatThread[]> {
   const url = new URL(`${API_BASE_URL}/chats`);
