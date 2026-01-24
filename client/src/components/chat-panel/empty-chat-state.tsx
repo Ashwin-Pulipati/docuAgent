@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, MessageSquarePlus } from "lucide-react";
+import { FileText, Loader, MessageSquarePlus } from "lucide-react";
 import type { Document, Folder } from "@/lib/api";
 import { Button } from "../ui/button";
 
@@ -18,7 +18,10 @@ export function EmptyChatState({ selectedDocument, selectedFolder, onCreateChat,
     return (
       <div className="glass-panel flex h-full flex-col items-center justify-center border border-border/50 p-8 text-center">
         <div className="mb-4 rounded-2xl bg-muted/50 p-4 bg-gradient">
-           <MessageSquarePlus className="h-9 w-9 text-muted-foreground" aria-hidden="true" />
+          <MessageSquarePlus
+            className="h-9 w-9 text-muted-foreground"
+            aria-hidden="true"
+          />
         </div>
         <h2 className="bg-linear-to-r from-primary via-secondary to-accent bg-clip-text text-2xl font-display font-semibold text-transparent md:text-3xl">
           {disabled ? "Processing..." : "Ready to Chat?"}
@@ -35,15 +38,20 @@ export function EmptyChatState({ selectedDocument, selectedFolder, onCreateChat,
           )}
         </p>
         {onCreateChat && (
-          <Button 
+          <Button
             variant="ghost"
             size="lg"
-                onClick={onCreateChat} 
-                disabled={disabled}
-                className="mt-6 text-primary font-bold bg-primary/10 rounded-full"
-            >
-                {disabled ? "Please Wait" : "Create New Chat"}
-            </Button>
+            onClick={onCreateChat}
+            disabled={disabled}
+            className="mt-6 text-primary font-bold bg-primary/10 rounded-full"
+          >
+            {disabled ? (
+              <Loader className="mr-1 animate-spin size-4.5!" />
+            ) : (
+              <MessageSquarePlus className="mr-1 size-4.5!" />
+            )}
+            {disabled ? "Please Wait" : "Create New Chat"}
+          </Button>
         )}
       </div>
     );
