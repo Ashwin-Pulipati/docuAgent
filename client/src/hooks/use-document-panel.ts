@@ -46,6 +46,8 @@ type Return = Readonly<{
   selectedIds: Set<string>;
   toggleSelection: (id: SelectionId) => void;
   resetSelection: () => void;
+  selectAll: () => void;
+  deselectAll: () => void;
 
   filtered: FilteredItems;
 
@@ -588,33 +590,53 @@ export function useDocumentPanel({
     [refreshFn, selectedDocument, setSelectedDocument, selectedChat, setSelectedChat, docs],
   );
 
+  const selectAll = React.useCallback(() => {
+    filtered.folders.forEach((f) => add(`f-${f.id}`));
+    filtered.docs.forEach((d) => {
+        add(`d-${d.doc_id}`);
+        // Also select its chats
+        const docChats = chats.filter(c => c.document_id === d.id);
+        docChats.forEach(c => add(`c-${c.id}`));
+    });
+    filtered.chats.forEach((c) => add(`c-${c.id}`));
+  }, [filtered, add, chats]);
+
+  const deselectAll = React.useCallback(() => {
+    reset();
+  }, [reset]);
+
   const bulkDelete = React.useCallback(async () => {
     if (selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} item(s)?`)) return;
 
+    const toastId = toast.loading(`Deleting ${selectedIds.size} item(s)... please wait.`);
     let failed = 0;
     const deletedDocIds = new Set<string>();
     const deletedFolderIds = new Set<number>();
     const deletedChatIds = new Set<number>();
 
-    for (const id of Array.from(selectedIds)) {
-      try {
-        if (id.startsWith("f-")) {
-          const fid = Number.parseInt(id.substring(2));
-          await deleteFolder(fid);
-          deletedFolderIds.add(fid);
-        } else if (id.startsWith("d-")) {
-            const did = id.substring(2);
-            await deleteDocument(did);
-            deletedDocIds.add(did);
-        } else if (id.startsWith("c-")) {
-            const cid = Number.parseInt(id.substring(2));
-            await deleteChat(cid);
-            deletedChatIds.add(cid);
+    try {
+      for (const id of Array.from(selectedIds)) {
+        try {
+          if (id.startsWith("f-")) {
+            const fid = Number.parseInt(id.substring(2));
+            await deleteFolder(fid);
+            deletedFolderIds.add(fid);
+          } else if (id.startsWith("d-")) {
+              const did = id.substring(2);
+              await deleteDocument(did);
+              deletedDocIds.add(did);
+          } else if (id.startsWith("c-")) {
+              const cid = Number.parseInt(id.substring(2));
+              await deleteChat(cid);
+              deletedChatIds.add(cid);
+          }
+        } catch {
+          failed++;
         }
-      } catch {
-        failed++;
       }
+    } finally {
+      toast.dismiss(toastId);
     }
 
     if (failed > 0) toast.error(`Failed to delete ${failed} items.`);
@@ -772,6 +794,8 @@ export function useDocumentPanel({
     selectedIds,
     toggleSelection: toggleSelection as (id: SelectionId) => void,
     resetSelection: reset,
+    selectAll,
+    deselectAll,
     filtered,
     fileInputRef,
     folderInputRef,

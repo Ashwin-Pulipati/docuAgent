@@ -1,34 +1,33 @@
 from __future__ import annotations
 
-from typing import Optional, List
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Response
 import inngest
-from sqlmodel import Session, select
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy import desc
+from sqlmodel import Session, select
 
+from app.api.schemas import (
+    ChatMessageResponse,
+    ChatThreadCreate,
+    ChatThreadResponse,
+    ChatThreadUpdate,
+    FolderCreate,
+    FolderResponse,
+    FolderUpdate,
+    JobStatusResponse,
+    QueryRequest,
+    QueryResponse,
+    ReactionCreate,
+    UpdateDocumentRequest,
+    UploadResponse,
+)
+from app.services.db import engine
+from app.services.jobs_client import InngestJobsClient
+from app.services.models import Document, Folder
+from app.services.repositories import ChatRepo, DocumentRepo, FolderRepo
+from app.services.storage import LocalStorage
+from app.services.vector_store import QdrantVectorStore
 from app.settings import settings
 from app.workflows.inngest_app import get_inngest_client
-from app.services.storage import LocalStorage
-from app.services.jobs_client import InngestJobsClient
-from app.services.db import engine
-from app.services.models import Document, Folder
-from app.services.repositories import DocumentRepo, FolderRepo, ChatRepo
-from app.services.vector_store import QdrantVectorStore
-from app.api.schemas import (
-    UploadResponse, 
-    QueryRequest, 
-    QueryResponse, 
-    JobStatusResponse,
-    FolderCreate,
-    FolderUpdate,
-    FolderResponse,
-    UpdateDocumentRequest,
-    ChatThreadCreate,
-    ChatThreadUpdate,
-    ChatThreadResponse,
-    ChatMessageResponse,
-    ReactionCreate
-)
 
 router = APIRouter()
 
@@ -62,7 +61,7 @@ def update_folder(folder_id: int, req: FolderUpdate):
              raise HTTPException(status_code=404, detail="Folder not found")
         return FolderResponse(id=folder.id, name=folder.name, created_at=str(folder.created_at))
 
-@router.get("/folders", response_model=List[FolderResponse])
+@router.get("/folders", response_model=list[FolderResponse])
 def list_folders(response: Response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
@@ -90,11 +89,11 @@ def delete_folder(folder_id: int):
                 
     return {"ok": True}
 
-@router.post("/documents", response_model=List[UploadResponse])
+@router.post("/documents", response_model=list[UploadResponse])
 async def upload_documents(
-    files: List[UploadFile] = File(...),
-    folder_id: Optional[int] = Form(None),
-    folder_name: Optional[str] = Form(None)
+    files: list[UploadFile] = File(...),
+    folder_id: int | None = Form(None),
+    folder_name: str | None = Form(None)
 ):
     if not folder_id and folder_name:
         with Session(engine) as session:
@@ -276,8 +275,8 @@ def create_chat(req: ChatThreadCreate):
             messages=[]
         )
 
-@router.get("/chats", response_model=List[ChatThreadResponse])
-def list_chats(response: Response, folder_id: Optional[int] = None, document_id: Optional[int] = None):
+@router.get("/chats", response_model=list[ChatThreadResponse])
+def list_chats(response: Response, folder_id: int | None = None, document_id: int | None = None):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     with Session(engine) as session:

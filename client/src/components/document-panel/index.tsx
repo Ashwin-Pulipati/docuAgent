@@ -47,6 +47,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
     exitSelectionMode,
     selectedIds,
     toggleSelection,
+    selectAll,
+    deselectAll,
 
     filtered,
 
@@ -172,6 +174,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         onSelectFolderContext={() => setSelectedDocument(null)}
         onEnterSelectionMode={enterSelectionMode}
         onExitSelectionMode={exitSelectionMode}
+        onSelectAll={selectAll}
+        onDeselectAll={deselectAll}
         onBulkDelete={bulkDelete}
         onRefresh={refresh}
         openCreateFolder={openCreateFolder}

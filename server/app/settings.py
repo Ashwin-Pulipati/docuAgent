@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     embed_model: str = Field(default="text-embedding-3-large")
     embed_dim: int = Field(default=3072)
     chat_model: str = Field(default="gpt-4o-mini")
+    vision_model: str = Field(default="gpt-4o-mini")
     
     qdrant_url: str = Field(default="http://localhost:6333")
     qdrant_api_key: str = Field(default="")

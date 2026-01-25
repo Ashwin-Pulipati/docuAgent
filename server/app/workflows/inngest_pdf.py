@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import datetime
 import uuid
+
 import inngest
 from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.services.chunking import LlamaIndexChunker
+from app.services.db import engine
+from app.services.embeddings import OpenAIEmbedder
+from app.services.repositories import DocumentRepo
+from app.services.storage import LocalStorage
+from app.services.vector_store import QdrantVectorStore
 from app.settings import settings
 from app.workflows.inngest_app import get_inngest_client
-from app.services.chunking import LlamaIndexChunker
-from app.services.embeddings import OpenAIEmbedder
-from app.services.vector_store import QdrantVectorStore
-from app.services.storage import LocalStorage
-from app.services.db import engine
-from app.services.repositories import DocumentRepo
 
 inngest_client = get_inngest_client()
 
@@ -48,7 +48,7 @@ async def inngest_pdf(ctx: inngest.Context):
         source_id = str(ctx.event.data.get("source_id", pdf_path))
         sha256 = str(ctx.event.data.get("sha256", ""))
 
-        chunk_dicts = chunker.load_and_chunk_pdf(pdf_path)
+        chunk_dicts = await chunker.load_and_chunk_pdf(pdf_path)
         chunks = [c["text"] for c in chunk_dicts]
         metadatas = [{"page_number": c["page_number"]} for c in chunk_dicts]
         
@@ -67,7 +67,7 @@ async def inngest_pdf(ctx: inngest.Context):
         if not payload.chunks:
             return Upserted(ingested=0).model_dump()
 
-        # Lazy init Qdrant to avoid module-level connection issues
+        # Lazy init Qdrant
         store = QdrantVectorStore(
             url=settings.qdrant_url, 
             api_key=settings.qdrant_api_key,
@@ -75,24 +75,40 @@ async def inngest_pdf(ctx: inngest.Context):
             dim=settings.embed_dim
         )
         
-        vecs = embedder.embed(payload.chunks)
-       
-        ids = [str(uuid.uuid5(uuid.NAMESPACE_URL, f"{payload.doc_id}:{i}")) for i in range(len(payload.chunks))]
+        BATCH_SIZE = 100
+        total_ingested = 0
+        
+        for i in range(0, len(payload.chunks), BATCH_SIZE):
+            batch_chunks = payload.chunks[i : i + BATCH_SIZE]
+            batch_metadatas = payload.chunk_metadatas[i : i + BATCH_SIZE]
+            
+            # Embed batch
+            vecs = embedder.embed(batch_chunks)
+            
+            # Generate IDs and payloads for batch
+            ids = []
+            payloads = []
+            
+            for j, text in enumerate(batch_chunks):
+                global_index = i + j
+                # Create deterministic ID based on doc_id and index
+                chunk_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{payload.doc_id}:{global_index}"))
+                ids.append(chunk_id)
+                
+                payloads.append({
+                    "doc_id": payload.doc_id,
+                    "source": payload.source_id,
+                    "sha256": payload.sha256,
+                    "chunk_index": global_index,
+                    "text": text,
+                    "page_number": batch_metadatas[j]["page_number"]
+                })
 
-        payloads = [
-            {
-                "doc_id": payload.doc_id,
-                "source": payload.source_id,
-                "sha256": payload.sha256,
-                "chunk_index": i,
-                "text": payload.chunks[i],
-                "page_number": payload.chunk_metadatas[i]["page_number"]
-            }
-            for i in range(len(payload.chunks))
-        ]
+            # Upsert batch
+            store.upsert(ids, vecs, payloads)
+            total_ingested += len(batch_chunks)
 
-        store.upsert(ids, vecs, payloads)
-        return Upserted(ingested=len(payload.chunks)).model_dump()
+        return Upserted(ingested=total_ingested).model_dump()
 
     try:
         chunked = await ctx.step.run("load-and-chunk", _load_and_chunk)
