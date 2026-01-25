@@ -68,15 +68,7 @@ export default function Home() {
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
-  useTitle(
-    selectedDocument
-      ? `DocuAgent | ${selectedDocument.name}`
-      : selectedChat
-        ? `DocuAgent | ${selectedChat.title}`
-        : selectedFolder
-          ? `DocuAgent | ${selectedFolder.name}`
-          : "DocuAgent | Dashboard",
-  );
+  useTitle("DocuAgent");
 
   return (
     <div className="relative flex h-screen w-full bg-background text-foreground overflow-hidden">

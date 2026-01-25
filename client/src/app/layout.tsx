@@ -28,10 +28,7 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "DocuAgent",
-    template: `%s - DocuAgent`,
-  },
+  title: "DocuAgent",
   description:
     "DocuAgent: An intelligent application for seamless interaction with your documents using AI-powered chat. Built with Next.js, Django, and LangChain.",
   keywords: [
