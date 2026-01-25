@@ -55,7 +55,7 @@ export default function Header({
             className="hidden md:inline-flex h-10 w-10 rounded-full hover:bg-accent/10"
             aria-label={`Switch avatar (current: ${userGender})`}
           >
-            <Avatar className="h-8 w-8 ring-1 ring-border/50">
+            <Avatar className="h-10 w-10 ring-1 ring-border/50">
               <AvatarImage src={`/${userGender}-user.png`} alt="User Avatar" />
               <AvatarFallback>
                  <Origami className="h-4 w-4" />
