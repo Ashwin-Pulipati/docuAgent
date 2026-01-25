@@ -43,7 +43,7 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 
 ## 🏗️ System Architecture
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/89169ae4-e8f9-4d80-a5d5-6f41d241ba13" alt="DocuAgent System Architecture Diagram" width="900">
+    <img src="https://github.com/user-attachments/assets/5b18d2fe-c8c8-45d0-81b7-9fa14d0fbb42" alt="DocuAgent System Architecture Diagram" width="900">
 </div>
 <br/>
 
