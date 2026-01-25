@@ -74,7 +74,7 @@ To get a local copy up and running, follow these simple steps.
 
 Make sure you have the following installed:
 *   Node.js (v18+)
-*   Python (v3.10+)
+*   Python (v3.12+)
 *   Docker & Docker Compose (for the database and vector store)
 
 ### Installation
