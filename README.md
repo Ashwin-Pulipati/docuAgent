@@ -38,7 +38,7 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 - **Modern UX:** Enterprise-grade Neumorphic Glassmorphism design system with fluid animations and responsive accessibility.
 - **Smart Citations:** Every answer comes with clickable citations that highlight the exact source text and page number.
 - **Context-Aware Sidebar:** A dynamic sidebar that adapts to your selection, showing relevant chats and document hierarchies.
-- Background Processing: Seamless document ingestion and embedding handled by robust background jobs.
+- **Background Processing**: Seamless document ingestion and embedding handled by robust background jobs.
 
 ## 🏗️ System Architecture
 <div align="center">
