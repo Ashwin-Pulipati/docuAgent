@@ -100,7 +100,7 @@ type Return = Readonly<{
   handleDragOver: (e: React.DragEvent) => void;
 
   createChatThread: (docId?: number, parentId?: number, folderId?: number) => Promise<ChatThread | undefined>;
-  deleteChatThread: (id: number) => Promise<void>;
+  deleteChatThread: (id: number) => Promise<boolean>;
   folderBusySet: Set<number>;
   toggleChatStar: (chat: ChatThread) => Promise<void>;
 }>;
