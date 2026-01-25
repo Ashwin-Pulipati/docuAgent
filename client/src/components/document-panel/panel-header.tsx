@@ -11,6 +11,8 @@ import {
   RefreshCcw,
   Trash2,
   X,
+  ListChecks,
+  Square
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,6 +37,8 @@ type Props = Readonly<{
   
     onEnterSelectionMode: () => void;
     onExitSelectionMode: () => void;
+    onSelectAll: () => void;
+    onDeselectAll: () => void;
   
     onBulkDelete: () => void;
     onRefresh: () => void;
@@ -68,6 +72,8 @@ type Props = Readonly<{
     onSelectFolderContext,
     onEnterSelectionMode,
     onExitSelectionMode,
+    onSelectAll,
+    onDeselectAll,
     onBulkDelete,
     onRefresh,
     openCreateFolder,
@@ -142,6 +148,21 @@ type Props = Readonly<{
                   aria-label="Cancel selection mode"
                 >
                   <X className="size-4.5!" aria-hidden="true" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={selectedCount > 0 ? onDeselectAll : onSelectAll}
+                  className="h-9 w-9 rounded-full text-primary hover:bg-primary/10 font-bold"
+                  title={selectedCount > 0 ? "Deselect All" : "Select All"}
+                  aria-label={selectedCount > 0 ? "Deselect All" : "Select All"}
+                >
+                  {selectedCount > 0 ? (
+                    <Square className="size-4.5!" aria-hidden="true" />
+                  ) : (
+                    <ListChecks className="size-4.5!" aria-hidden="true" />
+                  )}
                 </Button>
   
                 <Button

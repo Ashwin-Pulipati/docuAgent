@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+import inngest.fast_api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import inngest.fast_api
 
-from app.settings import settings
-from app.logging_config import setup_logging
 from app.api.routes import router
+from app.logging_config import setup_logging
+from app.settings import settings
+from app.workflows.agent_query import agent_query
 from app.workflows.inngest_app import get_inngest_client
 from app.workflows.inngest_pdf import inngest_pdf
-from app.workflows.agent_query import agent_query
 
 
 def create_app() -> FastAPI:

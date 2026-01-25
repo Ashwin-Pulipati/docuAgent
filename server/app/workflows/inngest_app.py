@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+
 import inngest
+
 from app.settings import settings
 
 _inngest_client = inngest.Inngest(

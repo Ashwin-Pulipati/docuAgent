@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from sqlalchemy.engine import Engine
-from sqlmodel import SQLModel, create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel, create_engine
 
 from app.settings import settings
 

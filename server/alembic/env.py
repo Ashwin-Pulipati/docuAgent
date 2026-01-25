@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from logging.config import fileConfig
-from alembic import context
-from sqlalchemy import engine_from_config, pool
 
-from app.settings import settings
+from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-from app.services.models import Document 
+from alembic import context
+from app.settings import settings
 
 config = context.config
 

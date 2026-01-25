@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-import json
 import dataclasses
-import inngest
-import typing
+import json
 import logging
-from typing import Optional, Any, Literal
-from pydantic import BaseModel
+import typing
+from typing import Any, Literal
+
+import inngest
 from inngest.experimental import ai
+from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.api.schemas import Citation
+from app.services.db import engine
+from app.services.embeddings import OpenAIEmbedder
+from app.services.repositories import ChatRepo, DocumentRepo
+from app.services.vector_store import QdrantVectorStore
 from app.settings import settings
 from app.workflows.inngest_app import get_inngest_client
-from app.services.embeddings import OpenAIEmbedder
-from app.services.vector_store import QdrantVectorStore
-from app.services.db import engine
-from app.services.repositories import DocumentRepo, ChatRepo
-from app.api.schemas import Citation
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,9 @@ class AgenticRAGResult(BaseModel):
     citations: list[Citation] = []
     sources: list[str] = []
     needs_clarification: bool = False
-    clarifying_question: Optional[str] = None
-    reaction: Optional[str] = None
-    message_id: Optional[int] = None
+    clarifying_question: str | None = None
+    reaction: str | None = None
+    message_id: int | None = None
     num_contexts: int = 0
 
 
@@ -50,26 +51,30 @@ class AgenticRAGResult(BaseModel):
 async def agent_query(ctx: inngest.Context):
     question = str(ctx.event.data.get("question") or "").strip()
     top_k = int(str(ctx.event.data.get("top_k", settings.default_top_k)))
-    doc_id: Optional[str] = ctx.event.data.get("doc_id")
-    folder_id: Optional[int] = ctx.event.data.get("folder_id")
-    thread_id: Optional[int] = ctx.event.data.get("thread_id")
+    doc_id: str | None = ctx.event.data.get("doc_id")
+    folder_id: int | None = ctx.event.data.get("folder_id")
+    thread_id: int | None = ctx.event.data.get("thread_id")
 
     async def _retrieve():
-        target_doc_ids: Optional[list[str]] = None
+        target_sha256s: list[str] | None = None
         is_folder_search = False
         
         logger.info(f"Agent Query: doc_id={doc_id}, folder_id={folder_id}")
 
-        if doc_id:
-            target_doc_ids = [doc_id]
-        elif folder_id:
-            is_folder_search = True
-            with Session(engine) as session:
-                docs = DocumentRepo(session).get_by_folder(folder_id)
-                target_doc_ids = [d.doc_id for d in docs]
-                logger.info(f"Found {len(target_doc_ids)} docs in folder {folder_id}: {target_doc_ids}")
-                if not target_doc_ids:
-                    # Folder empty
+        with Session(engine) as session:
+            repo = DocumentRepo(session)
+            if doc_id:
+                doc = repo.get_by_doc_id(doc_id)
+                if doc:
+                    target_sha256s = [doc.sha256]
+                else:
+                    return []
+            elif folder_id:
+                is_folder_search = True
+                docs = repo.get_by_folder(folder_id)
+                target_sha256s = list(set([d.sha256 for d in docs]))
+                logger.info(f"Found {len(target_sha256s)} unique hashes in folder {folder_id}")
+                if not target_sha256s:
                     return []
 
         # Lazy init Qdrant
@@ -83,15 +88,11 @@ async def agent_query(ctx: inngest.Context):
         qvec = embedder.embed([question])[0]
         
         if is_folder_search:
-            # For folders, we want to search across all documents.
-            # We use a higher top_k to ensure we capture enough context from potentially multiple documents.
-            # We use standard search (not grouped) to allow the most relevant chunks to bubble up, 
-            # even if they all come from the same document (which is better for specific QA).
             effective_top_k = max(top_k, 20)
             logger.info(f"Executing folder search with top_k={effective_top_k}...")
-            chunks = store.search(qvec, top_k=effective_top_k, doc_ids=target_doc_ids)
+            chunks = store.search(qvec, top_k=effective_top_k, sha256s=target_sha256s)
         else:
-            chunks = store.search(qvec, top_k=top_k, doc_ids=target_doc_ids)
+            chunks = store.search(qvec, top_k=top_k, sha256s=target_sha256s)
             
         logger.info(f"Retrieved {len(chunks)} chunks.")
         unique_sources = {c.source for c in chunks}

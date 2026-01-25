@@ -5,9 +5,9 @@ Revises: 0003_add_chat_tables
 Create Date: 2026-01-22 11:29:39.237386
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'cece4bb80715'

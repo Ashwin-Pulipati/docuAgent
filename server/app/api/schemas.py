@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any, Literal
 
 
 class UploadResponse(BaseModel):
@@ -25,16 +26,16 @@ class FolderResponse(BaseModel):
 
 
 class UpdateDocumentRequest(BaseModel):
-    name: Optional[str] = None
-    folder_id: Optional[int] = None
+    name: str | None = None
+    folder_id: int | None = None
 
 
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     top_k: int = Field(default=6, ge=1, le=20)
-    doc_id: Optional[str] = None 
-    folder_id: Optional[int] = None
-    thread_id: Optional[int] = None # Optional for stateless queries, required for threaded
+    doc_id: str | None = None 
+    folder_id: int | None = None
+    thread_id: int | None = None # Optional for stateless queries, required for threaded
 
 
 class QueryResponse(BaseModel):
@@ -43,39 +44,39 @@ class QueryResponse(BaseModel):
 
 class JobStatusResponse(BaseModel):
     status: str
-    output: Optional[dict] = None
-    error: Optional[dict] = None
-    run_id: Optional[str] = None
+    output: dict | None = None
+    error: dict | None = None
+    run_id: str | None = None
 
 
 class Citation(BaseModel):
     chunk_id: str
     source: str
     quote: str = ""
-    page_number: Optional[int] = None
+    page_number: int | None = None
 
 
 class AgenticResult(BaseModel):
     intent: Literal["qa", "summarize", "extract", "clarify"]
     answer: str = ""
     citations: list[Citation] = []
-    sources: List[str] = []
+    sources: list[str] = []
     needs_clarification: bool = False
-    clarifying_question: Optional[str] = None
+    clarifying_question: str | None = None
     num_contexts: int = 0
 
 
 class ChatThreadCreate(BaseModel):
-    title: Optional[str] = "New Chat"
-    folder_id: Optional[int] = None
-    document_id: Optional[int] = None
-    parent_id: Optional[int] = None
+    title: str | None = "New Chat"
+    folder_id: int | None = None
+    document_id: int | None = None
+    parent_id: int | None = None
     is_starred: bool = False
 
 
 class ChatThreadUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=100)
-    is_starred: Optional[bool] = None
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    is_starred: bool | None = None
 
 
 class ReactionCreate(BaseModel):
@@ -86,8 +87,8 @@ class ChatMessageResponse(BaseModel):
     id: int
     role: str
     content: str
-    citations: Optional[List[Citation]] = None
-    reactions: Optional[List[Dict[str, Any]]] = None
+    citations: list[Citation] | None = None
+    reactions: list[dict[str, Any]] | None = None
     created_at: str
 
 
@@ -95,9 +96,9 @@ class ChatThreadResponse(BaseModel):
     id: int
     title: str
     is_starred: bool
-    folder_id: Optional[int]
-    document_id: Optional[int]
-    parent_id: Optional[int]
+    folder_id: int | None
+    document_id: int | None
+    parent_id: int | None
     created_at: str
     updated_at: str
-    messages: List[ChatMessageResponse] = []
+    messages: list[ChatMessageResponse] = []
