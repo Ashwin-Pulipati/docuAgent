@@ -89,6 +89,8 @@ export default function Home() {
         selectedChat={selectedChat}
         setSelectedChat={handleSelectChat}
         onSelectionReady={setSelectionReady}
+        userGender={userGender ?? "female"}
+        onUserGenderToggle={() => setUserGender(userGender === "male" ? "female" : "male")}
       />
 
       <SidebarInset className="relative flex w-0 flex-1 flex-col min-w-0 h-full overflow-y-auto [scrollbar-gutter:stable]">

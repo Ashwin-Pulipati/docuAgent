@@ -22,6 +22,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   readonly selectedChat: ChatThread | null;
   readonly setSelectedChat: (c: ChatThread | null) => void;
   readonly onSelectionReady?: (isReady: boolean) => void;
+  readonly userGender?: "male" | "female";
+  readonly onUserGenderToggle?: () => void;
 }>(function DocumentPanel({
   selectedDocument,
   setSelectedDocument,
@@ -30,6 +32,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   selectedChat,
   setSelectedChat,
   onSelectionReady,
+  userGender = "female",
+  onUserGenderToggle,
 }, ref) {
   const {
     docs,
@@ -249,6 +253,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
         docsCount={docs.length}
         foldersCount={folders.length}
         busy={busy}
+        userGender={userGender}
+        onUserGenderToggle={onUserGenderToggle}
       />
 
       <RenameDocumentDialog

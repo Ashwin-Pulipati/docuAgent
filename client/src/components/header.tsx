@@ -36,7 +36,7 @@ export default function Header({
               />
             </div>
 
-            <div className="hidden sm:flex flex-col">
+            <div className="flex flex-col">
               <h1 className="text-3xl md:text-4xl font-display font-bold leading-none tracking-tight text-gradient brightness-75">
                 DocuAgent
               </h1>
@@ -52,7 +52,7 @@ export default function Header({
             variant="ghost"
             size="icon"
             onClick={onUserGenderToggle}
-            className="h-10 w-10 rounded-full hover:bg-accent/10"
+            className="hidden md:inline-flex h-10 w-10 rounded-full hover:bg-accent/10"
             aria-label={`Switch avatar (current: ${userGender})`}
           >
             <Avatar className="h-8 w-8 ring-1 ring-border/50">
