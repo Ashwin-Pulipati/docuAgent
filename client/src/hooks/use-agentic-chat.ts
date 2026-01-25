@@ -237,6 +237,21 @@ export function useAgenticChat({
               const hasChanged = history.some((m, i) => m.text !== messages[i]?.text || m.status !== messages[i]?.status || JSON.stringify(m.reactions) !== JSON.stringify(messages[i]?.reactions));
               if (hasChanged) {
                   setMessages(history);
+
+                  if (polling.size > 0) {
+                      setPolling((prev) => {
+                          const next = new Map(prev);
+                          let changed = false;
+                          prev.forEach((entry, eventId) => {
+                              const msg = history[entry.idx];
+                              if (msg && msg.status === "complete" && msg.sender === "agent") {
+                                  next.delete(eventId);
+                                  changed = true;
+                              }
+                          });
+                          return changed ? next : prev;
+                      });
+                  }
               }
           }).catch(() => {});
       }

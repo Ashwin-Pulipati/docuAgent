@@ -96,6 +96,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
     setSelectedDocument,
     selectedFolder,
     setSelectedFolder,
+    selectedChat,
+    setSelectedChat,
   });
 
   const handleCreateChat = React.useCallback(async (docId?: number, parentId?: number, folderId?: number) => {
@@ -108,8 +110,8 @@ export const DocumentPanel = forwardRef<DocumentPanelHandle, {
   }, [createChatThread, setSelectedChat, setSelectedDocument]);
 
   const handleDeleteChat = React.useCallback(async (id: number) => {
-      await deleteChatThread(id);
-      if (selectedChat?.id === id) {
+      const deleted = await deleteChatThread(id);
+      if (deleted && selectedChat?.id === id) {
           setSelectedChat(null);
       }
   }, [deleteChatThread, selectedChat, setSelectedChat]);

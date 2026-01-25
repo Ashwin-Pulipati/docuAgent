@@ -29,6 +29,8 @@ type Args = Readonly<{
   setSelectedDocument: (d: Document | null) => void;
   selectedFolder: Folder | null;
   setSelectedFolder: (f: Folder | null) => void;
+  selectedChat: ChatThread | null;
+  setSelectedChat: (c: ChatThread | null) => void;
 }>;
 
 type Return = Readonly<{
@@ -108,6 +110,8 @@ export function useDocumentPanel({
   setSelectedDocument,
   selectedFolder,
   setSelectedFolder: _setSelectedFolder,
+  selectedChat,
+  setSelectedChat,
 }: Args): Return {
   const [docs, setDocs] = React.useState<Document[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
@@ -541,12 +545,18 @@ export function useDocumentPanel({
     async (docId: string) => {
       if (!confirm("Delete document?")) return;
       
+      const docToDelete = docs.find(d => d.doc_id === docId);
+
       optimisticDeletedDocIds.current.add(docId);
       setDocs((prev) => prev.filter((d) => d.doc_id !== docId));
       toast.success("Document deleted");
 
       if (selectedDocument?.doc_id === docId) {
         setSelectedDocument(null);
+      }
+      
+      if (selectedChat && docToDelete && selectedChat.document_id === docToDelete.id) {
+          setSelectedChat(null);
       }
 
       try {
@@ -575,7 +585,7 @@ export function useDocumentPanel({
         
       }
     },
-    [refreshFn, selectedDocument, setSelectedDocument],
+    [refreshFn, selectedDocument, setSelectedDocument, selectedChat, setSelectedChat, docs],
   );
 
   const bulkDelete = React.useCallback(async () => {
@@ -585,6 +595,7 @@ export function useDocumentPanel({
     let failed = 0;
     const deletedDocIds = new Set<string>();
     const deletedFolderIds = new Set<number>();
+    const deletedChatIds = new Set<number>();
 
     for (const id of Array.from(selectedIds)) {
       try {
@@ -596,7 +607,11 @@ export function useDocumentPanel({
             const did = id.substring(2);
             await deleteDocument(did);
             deletedDocIds.add(did);
-        } else if (id.startsWith("c-")) await deleteChat(Number.parseInt(id.substring(2)));
+        } else if (id.startsWith("c-")) {
+            const cid = Number.parseInt(id.substring(2));
+            await deleteChat(cid);
+            deletedChatIds.add(cid);
+        }
       } catch {
         failed++;
       }
@@ -611,11 +626,14 @@ export function useDocumentPanel({
     if (selectedFolder && deletedFolderIds.has(selectedFolder.id)) {
         _setSelectedFolder(null);
     }
+    if (selectedChat && deletedChatIds.has(selectedChat.id)) {
+        setSelectedChat(null);
+    }
 
     reset();
     toggleSelectionMode(false);
     await refreshFn();
-  }, [reset, selectedIds, toggleSelectionMode, refreshFn, selectedDocument, setSelectedDocument, selectedFolder, _setSelectedFolder]);
+  }, [reset, selectedIds, toggleSelectionMode, refreshFn, selectedDocument, setSelectedDocument, selectedFolder, _setSelectedFolder, selectedChat, setSelectedChat]);
 
   const handleMoveDoc = React.useCallback(
     async (docId: string, targetFolderId: number | null) => {
@@ -717,13 +735,15 @@ export function useDocumentPanel({
   }, [editingChat, renameValue, refreshFn]);
 
   const deleteChatThread = React.useCallback(async (id: number) => {
-      if (!confirm("Delete this chat?")) return;
+      if (!confirm("Delete this chat?")) return false;
       try {
           await deleteChat(id);
           await refreshFn();
           toast.success("Chat deleted");
+          return true;
       } catch {
           toast.error("Failed to delete chat");
+          return false;
       }
   }, [refreshFn]);
 
