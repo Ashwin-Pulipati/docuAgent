@@ -6,7 +6,7 @@
   <h3 align="center">DocuAgent</h3>
 
   <p align="center">
-    An intelligent, Agentic RAG-powered document assistant for seamless querying, summarization, and extraction from PDFs.
+    An intelligent, Agentic RAG-powered document assistant for seamless querying, summarization, and extraction from PDFs and their visual content (images, charts, diagrams).
     <br />
     <a href="https://docuagent.vercel.app"><strong>View Demo »</strong></a>
   </p>
