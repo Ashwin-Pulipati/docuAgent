@@ -2,10 +2,19 @@
 
 import ThemeToggle from "@/components/theme-toggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Origami } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Header() {
+export default function Header({ 
+  userGender, 
+  onUserGenderToggle 
+}: { 
+  readonly userGender: "male" | "female"; 
+  readonly onUserGenderToggle: () => void;
+}) {
   return (
     <header className="sticky top-0 z-30 h-18 border-b border-border/50 bg-card/30 px-4 backdrop-blur-md">
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between py-8">
@@ -39,6 +48,20 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onUserGenderToggle}
+            className="h-10 w-10 rounded-full hover:bg-accent/10"
+            aria-label={`Switch avatar (current: ${userGender})`}
+          >
+            <Avatar className="h-8 w-8 ring-1 ring-border/50">
+              <AvatarImage src={`/${userGender}-user.png`} alt="User Avatar" />
+              <AvatarFallback>
+                 <Origami className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          </Button>
           <ThemeToggle />
         </div>
       </div>

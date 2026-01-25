@@ -18,6 +18,7 @@ export function ChatPanel({
   onRenameChat,
   onCreateChat,
   isReady = true,
+  userGender = "female",
 }: {
   readonly selectedDocument: Document | null;
   readonly selectedFolder: Folder | null;
@@ -25,6 +26,7 @@ export function ChatPanel({
   readonly onRenameChat?: (newTitle: string) => void;
   readonly onCreateChat?: () => void;
   readonly isReady?: boolean;
+  readonly userGender?: "male" | "female";
 }) {
   const targetName = selectedDocument
     ? selectedDocument.name
@@ -150,6 +152,7 @@ export function ChatPanel({
               isCopied={copiedId === msg.id && copiedValue === msg.text}
               onCopy={() => copyMessage(msg.id, msg.text)}
               onReaction={onReaction}
+              userGender={userGender}
               onEdit={
                 msg.sender === "user"
                   ? () => edit(msg.id, msg.text)

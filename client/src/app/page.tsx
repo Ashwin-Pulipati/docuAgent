@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTitle, useWindowSize } from "react-use";
+import { useTitle, useWindowSize, useLocalStorage } from "react-use";
 import { DocumentPanel, type DocumentPanelHandle } from "@/components/document-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { SidebarInset } from "@/components/ui/sidebar";
@@ -13,6 +13,7 @@ import Footer from "@/components/footer";
 import { toast } from "sonner";
 
 export default function Home() {
+  const [userGender, setUserGender] = useLocalStorage<"male" | "female">("docuagent:user_gender", "female");
   const [selectedDocument, setSelectedDocument] =
     React.useState<Document | null>(null);
   const [selectedFolder, setSelectedFolder] = React.useState<Folder | null>(
@@ -91,7 +92,10 @@ export default function Home() {
       />
 
       <SidebarInset className="relative flex w-0 flex-1 flex-col min-w-0 h-full overflow-y-auto [scrollbar-gutter:stable]">
-        <Header />
+        <Header 
+            userGender={userGender ?? "female"} 
+            onUserGenderToggle={() => setUserGender(userGender === "male" ? "female" : "male")} 
+        />
 
         {isMobile && selectedDocument && (
           <div className="sticky top-16 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-card/30 px-4 backdrop-blur-sm md:hidden">
@@ -125,6 +129,7 @@ export default function Home() {
             onRenameChat={handleChatRename}
             onCreateChat={handleCreateChat}
             isReady={selectionReady}
+            userGender={userGender ?? "female"}
           />
         </main>
 

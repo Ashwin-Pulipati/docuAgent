@@ -20,6 +20,7 @@ type Props = Readonly<{
   onCopy: () => void;
   onEdit?: () => void;
   onReaction?: (msgId: string, emoji: string) => void;
+  userGender?: "male" | "female";
 }>;
 
 export const MessageItem = React.memo(function MessageItem({
@@ -29,6 +30,7 @@ export const MessageItem = React.memo(function MessageItem({
   onCopy,
   onEdit,
   onReaction,
+  userGender = "female",
 }: Props) {
   const showTools = msg.status !== "pending";
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
@@ -36,14 +38,14 @@ export const MessageItem = React.memo(function MessageItem({
   return (
     <li
       className={cn(
-        "group flex items-start gap-3 pb-8 relative",
+        "group flex items-center gap-3 pb-8 relative",
         isUser && "justify-end",
       )}
     >
       {!isUser && (
         <Avatar
           aria-label="AI Assistant"
-          className="h-9 w-9 bg-linear-to-t from-primary/50 via-transparent to-primary/50 mt-1 shrink-0"
+          className="h-10 w-10 shrink-0"
         >
           <AvatarImage
             src="/ai.png"
@@ -59,7 +61,7 @@ export const MessageItem = React.memo(function MessageItem({
       <div
         className={cn(
           "relative flex flex-col max-w-[65%]",
-          isUser ? "items-end" : "items-start",
+          isUser ? "items-end text-right" : "items-start",
         )}
       >
         <article
@@ -94,7 +96,7 @@ export const MessageItem = React.memo(function MessageItem({
           {!isUser &&
             msg.result?.citations &&
             msg.result.citations.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-border/30 pt-2">
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-border/30 pt-2 text-left">
                 {msg.result.citations.map((c, i) => (
                   <Badge
                     key={`${c.source}-${c.page_number ?? "na"}-${i}`}
@@ -160,10 +162,10 @@ export const MessageItem = React.memo(function MessageItem({
         {showTools && (
           <div
             className={cn(
-              "absolute top-0 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 px-2 py-1 rounded-full bg-background border border-border/50 shadow-sm z-10",
+              "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 px-2 py-1 rounded-full bg-background border border-border/50 shadow-sm z-10",
               isUser
-                ? "-left-2 -translate-x-full -mr-4"
-                : "-right-2 translate-x-full ml-4",
+                ? "-left-2 -translate-x-full"
+                : "-right-2 translate-x-full",
             )}
             aria-hidden={false}
           >
@@ -232,8 +234,8 @@ export const MessageItem = React.memo(function MessageItem({
       </div>
 
       {isUser && (
-        <Avatar aria-label="You" className="h-9 w-9 mt-1 shrink-0">
-          <AvatarImage src="/user.png" alt="You" className="object-cover" />
+        <Avatar aria-label="You" className="h-10 w-10 shrink-0">
+          <AvatarImage src={`/${userGender}-user.png`} alt="You" className="object-contain" />
           <AvatarFallback className="bg-linear-to-br from-primary/20 via-secondary/20 to-accent/20 text-muted-foreground brightness-105">
             <Origami
               className="h-5 w-5 scale-x-[-1] text-rosewater/80"
