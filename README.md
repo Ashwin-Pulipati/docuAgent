@@ -14,7 +14,7 @@
 
 ## 📝 About The Project
 
-DocuAgent is a powerful, full-stack Agentic AI RAG application designed to transform how users interact with their documents. Leveraging advanced Agentic RAG (Retrieval-Augmented Generation), it allows users to upload PDF documents or entire folders and chat with them naturally. Whether you need specific details, broad summaries, or data extraction, DocuAgent's intelligent agents work to provide accurate, citation-backed answers. With a modern, intuitive UI and robust document management features, it's the ultimate tool for researchers, professionals, and anyone dealing with information overload.
+DocuAgent is a powerful, full-stack Agentic AI RAG application designed to transform how users interact with their documents. Leveraging advanced Agentic RAG (Retrieval-Augmented Generation), it allows users to upload PDF documents or entire folders and chat with them naturally. Whether you need specific details, broad summaries, or data extraction from text and visuals, DocuAgent's intelligent agents work to provide accurate, citation-backed answers. It seamlessly processes both text and complex visual content (like charts and diagrams), ensuring no data point is left behind. With a modern, intuitive UI and robust document management features, it's the ultimate tool for researchers, professionals, and anyone dealing with information overload.
 
 ## ⚙️ Built With
 
@@ -31,14 +31,15 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 
 ## ✅ Key Features
 
-- **Agentic RAG:** sophisticated retrieval augmented generation that understands intent (QA, Summarize, Extract) for more accurate results.
-- **Document & Folder Management:** Organize your PDFs into folders and chat with individual documents or entire collections.
-- **System Monitoring:** Built-in sensors for network status (offline/online detection) and device battery health to ensure uninterrupted workflows.
-- **Branched Chat History:** Create multiple chat threads per document, rename them, and branch conversations to explore different topics without losing context.
-- **Modern UX:** Enterprise-grade Neumorphic Glassmorphism design system with fluid animations and responsive accessibility.
-- **Smart Citations:** Every answer comes with clickable citations that highlight the exact source text and page number.
-- **Context-Aware Sidebar:** A dynamic sidebar that adapts to your selection, showing relevant chats and document hierarchies.
-- **Background Processing**: Seamless document ingestion and embedding handled by robust background jobs.
+- **🤖 Agentic RAG Logic:** Sophisticated reasoning loop that understands intent (**QA, Summarize, Extract, Clarify**) for more accurate, context-aware results.
+- **📂 Document & Folder Management:** Organize your PDFs into folders and chat with individual documents or entire collections.
+- **🛡️ Durable Workflows:** Powered by **Inngest**, ensuring 100% reliability for background tasks like PDF ingestion, chunking, and multi-step agentic reasoning.
+- **👁️ Vision-Augmented Ingestion:** Integrated **Multimodal AI** to "see" and interpret images, charts, and diagrams within your PDFs, extracting text and insights from visual elements.
+- **🌿 Branched Chat History:** Create multiple chat threads per document, rename them, and branch conversations to explore different topics without losing context.
+- **🔍 Smart Citations:** Every answer comes with clickable citations that highlight the exact source text, page number, and source file.
+- **🌡️ System Monitoring:** Real-time sensors for network status (offline/online detection) and device battery health to ensure uninterrupted workflows.
+- **✨ AI Reactions:** The agent can react to your messages with emojis (👍, 🤔, 🎉) based on the conversation context.
+- **🎨 Modern UX/UI:** A bleeding-edge **Next.js 16** and **React 19** frontend featuring a Glassmorphic design, fluid animations, and a responsive sidebar.
 
 ## 🏗️ System Architecture
 <div align="center">
@@ -54,7 +55,7 @@ DocuAgent is engineered as a high-performance Agentic RAG (Retrieval-Augmented G
 **Backend (FastAPI):** A high-performance Python gateway that acts as the system's "traffic controller". It utilizes SQLModel for type-safe relational mapping and manages multi-tenant file uploads to secure storage.
 
 ### 2. Durable Orchestration (Inngest Workflows)
-**Asynchronous Ingestion Pipeline:** Document processing is offloaded to Inngest to ensure 100% reliability. This workflow manages PDF parsing, recursive character chunking, and parallel embedding generation, shielding the main thread from heavy computational loads.
+**Asynchronous Ingestion Pipeline:** Document processing is offloaded to Inngest to ensure 100% reliability. This workflow manages PDF parsing, multimodal image analysis (extracting insights from figures), recursive character chunking, and parallel embedding generation, shielding the main thread from heavy computational loads.
 
 **Agentic Reasoning Loop:** Query execution is treated as a durable state machine. The agent performs intent classification, multi-pass vector retrieval, and self-correction (Reflexion) before synthesizing the final grounded response.
 
@@ -63,7 +64,7 @@ DocuAgent is engineered as a high-performance Agentic RAG (Retrieval-Augmented G
 
 **Relational Persistence (Postgres):** Manages structured data, including user workspaces, document metadata, and historical chat threads.
 
-**AI Engine (OpenAI GPT-4o):** Powers the core reasoning engine, embedding generation, and final synthesis of retrieved context into human-readable answers.
+**AI Engine (OpenAI GPT-4o):** Powers the core reasoning engine, visual data extraction, embedding generation, and final synthesis of retrieved context into human-readable answers.
 
 
 ## ▶️ Getting Started
