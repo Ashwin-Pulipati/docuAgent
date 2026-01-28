@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/Ashwin-Pulipati/docuAgent">
-    <img src="client/public/logo.png" alt="Logo" width="80" height="80">
+    <img src="client/public/logo.png" alt="Logo" width="70" height="80">
   </a>
 
   <h3 align="center">DocuAgent</h3>
