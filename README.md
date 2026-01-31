@@ -34,6 +34,7 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 - **🤖 Agentic RAG Logic:** Sophisticated reasoning loop that understands intent (**QA, Summarize, Extract, Clarify**) for more accurate, context-aware results.
 - **📂 Document & Folder Management:** Organize your PDFs into folders and chat with individual documents or entire collections.
 - **🛡️ Durable Workflows:** Powered by **Inngest**, ensuring 100% reliability for background tasks like PDF ingestion, chunking, and multi-step agentic reasoning.
+- **🔒 Secure Uploads:** Integrated **ClamAV** antivirus scanning automatically checks every uploaded file for malware before processing, ensuring a safe and secure environment.
 - **👁️ Vision-Augmented Ingestion:** Integrated **Multimodal AI** to "see" and interpret images, charts, and diagrams within your PDFs, extracting text and insights from visual elements.
 - **🌿 Branched Chat History:** Create multiple chat threads per document, rename them, and branch conversations to explore different topics without losing context.
 - **🔍 Smart Citations:** Every answer comes with clickable citations that highlight the exact source text, page number, and source file.
@@ -43,7 +44,7 @@ This project is built with a cutting-edge tech stack ensuring performance, relia
 
 ## 🏗️ System Architecture
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/5b18d2fe-c8c8-45d0-81b7-9fa14d0fbb42" alt="DocuAgent System Architecture Diagram" width="900">
+    <img src="https://github.com/user-attachments/assets/8d2eebc5-2ebc-48b5-93d7-30e9ccddc545" alt="DocuAgent System Architecture Diagram" width="900">
 </div>
 <br/>
 
@@ -53,6 +54,8 @@ DocuAgent is engineered as a high-performance Agentic RAG (Retrieval-Augmented G
 **Frontend (Next.js 16):** Leverages the latest React 19 patterns for a stream-first user experience. Custom hooks manage optimistic UI updates and real-time citation rendering during long-running agentic reasoning.
 
 **Backend (FastAPI):** A high-performance Python gateway that acts as the system's "traffic controller". It utilizes SQLModel for type-safe relational mapping and manages multi-tenant file uploads to secure storage.
+
+**Malware Protection (ClamAV):** Implements synchronous stream scanning for all incoming files. Uploads are programmatically rejected if malware is detected, ensuring the integrity of the document vault.
 
 ### 2. Durable Orchestration (Inngest Workflows)
 **Asynchronous Ingestion Pipeline:** Document processing is offloaded to Inngest to ensure 100% reliability. This workflow manages PDF parsing, multimodal image analysis (extracting insights from figures), recursive character chunking, and parallel embedding generation, shielding the main thread from heavy computational loads.
@@ -87,7 +90,7 @@ Make sure you have the following installed:
     ```
 
 2.  **Start Infrastructure:**
-    Use Docker Compose to start PostgreSQL and Qdrant.
+    Use Docker Compose to start PostgreSQL, Qdrant, and ClamAV.
     ```sh
     cd server
     docker-compose up -d
