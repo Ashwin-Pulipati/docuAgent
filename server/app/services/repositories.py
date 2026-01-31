@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
+from typing import Sequence
 
 from sqlmodel import Session, col, desc, select
 
@@ -19,7 +20,7 @@ class FolderRepo:
         self.session.refresh(folder)
         return folder
 
-    def list_all(self) -> list[Folder]:
+    def list_all(self) -> Sequence[Folder]:
         stmt = select(Folder).order_by(desc(col(Folder.created_at)))
         return self.session.exec(stmt).all()
     
@@ -59,7 +60,7 @@ class DocumentRepo:
         stmt = select(Document).where(Document.sha256 == sha256)
         return self.session.exec(stmt).first()
     
-    def get_by_folder(self, folder_id: int) -> list[Document]:
+    def get_by_folder(self, folder_id: int) -> Sequence[Document]:
         stmt = select(Document).where(Document.folder_id == folder_id)
         return self.session.exec(stmt).all()
 
@@ -168,7 +169,7 @@ class ChatRepo:
     def get_thread(self, thread_id: int) -> ChatThread | None:
         return self.session.get(ChatThread, thread_id)
 
-    def list_threads(self, folder_id: int | None = None, document_id: int | None = None) -> list[ChatThread]:
+    def list_threads(self, folder_id: int | None = None, document_id: int | None = None) -> Sequence[ChatThread]:
         stmt = select(ChatThread)
         
         if folder_id is not None:
@@ -180,7 +181,7 @@ class ChatRepo:
             stmt = stmt.where(ChatThread.folder_id == None)
             
         # We return all threads matching the context, frontend builds the tree using parent_id
-        stmt = stmt.order_by(desc(ChatThread.updated_at))
+        stmt = stmt.order_by(desc(col(ChatThread.updated_at)))
         return self.session.exec(stmt).all()
 
     def update_thread(self, thread_id: int, title: str | None = None, is_starred: bool | None = None) -> ChatThread | None:
@@ -264,6 +265,6 @@ class ChatRepo:
         self.session.refresh(msg)
         return msg
 
-    def get_messages(self, thread_id: int) -> list[ChatMessage]:
-        stmt = select(ChatMessage).where(ChatMessage.thread_id == thread_id).order_by(ChatMessage.created_at)
+    def get_messages(self, thread_id: int) -> Sequence[ChatMessage]:
+        stmt = select(ChatMessage).where(ChatMessage.thread_id == thread_id).order_by(col(ChatMessage.created_at))
         return self.session.exec(stmt).all()

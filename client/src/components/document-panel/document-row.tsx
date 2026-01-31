@@ -15,9 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FileText, Loader2, MoreVertical, Pencil, Trash2, MessageSquarePlus, ChevronRight } from "lucide-react";
+import { FileText, Loader2, MoreVertical, Pencil, Trash2, MessageSquarePlus, ChevronRight, ShieldCheck } from "lucide-react";
 import { friendlyStatus, statusTone, cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Props = Readonly<{
   doc: Document;
@@ -114,6 +115,18 @@ export function DocumentRow({
                 >
                 {friendlyStatus(doc.status)}
                 </Badge>
+                
+                {friendlyStatus(doc.status) === "Ready" && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 cursor-help" aria-label="Scanned & Safe" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Scanned & Safe</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
                 {ingesting && (
                 <Loader2
                     className="h-3 w-3 animate-spin"

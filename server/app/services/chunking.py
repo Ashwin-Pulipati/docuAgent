@@ -59,15 +59,18 @@ class LlamaIndexChunker:
                 # Extract and describe images
                 valid_descriptions = await self._process_images(doc, page)
                 
+                # Explicitly ensure text is a string
+                text_content = str(text) if text is not None else ""
+                
                 if valid_descriptions:
-                    text += "\n\n" + "\n\n".join(
+                    text_content += "\n\n" + "\n\n".join(
                         [f"--- [Image Description] ---\n{d}" for d in valid_descriptions]
                     )
                 
-                if not text.strip():
+                if not text_content.strip():
                     return []
 
-                page_chunks = self.splitter.split_text(text)
+                page_chunks = self.splitter.split_text(text_content)
                 return [{
                     "text": c,
                     "page_number": page_idx + 1
