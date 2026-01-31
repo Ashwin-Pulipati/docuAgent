@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import inngest
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
+
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import desc
 from sqlmodel import Session, select
 
@@ -10,6 +12,7 @@ from app.api.schemas import (
     ChatThreadCreate,
     ChatThreadResponse,
     ChatThreadUpdate,
+    Citation,
     FolderCreate,
     FolderResponse,
     FolderUpdate,
@@ -26,6 +29,7 @@ from app.services.models import Document, Folder
 from app.services.repositories import ChatRepo, DocumentRepo, FolderRepo
 from app.services.storage import LocalStorage
 from app.services.vector_store import QdrantVectorStore
+from app.services.scanner import FileScanner
 from app.settings import settings
 from app.workflows.inngest_app import get_inngest_client
 
@@ -33,6 +37,7 @@ router = APIRouter()
 
 storage = LocalStorage(settings.uploads_dir)
 jobs = InngestJobsClient(settings.inngest_api_base)
+scanner = FileScanner()
 
 def get_vector_store() -> QdrantVectorStore:
     return QdrantVectorStore(
@@ -50,6 +55,8 @@ def create_folder(req: FolderCreate):
     with Session(engine) as session:
         repo = FolderRepo(session)
         folder = repo.create(req.name)
+        if folder.id is None:
+            raise HTTPException(status_code=500, detail="Failed to create folder")
         return FolderResponse(id=folder.id, name=folder.name, created_at=str(folder.created_at))
 
 @router.patch("/folders/{folder_id}", response_model=FolderResponse)
@@ -57,7 +64,7 @@ def update_folder(folder_id: int, req: FolderUpdate):
     with Session(engine) as session:
         repo = FolderRepo(session)
         folder = repo.update(folder_id, req.name)
-        if not folder:
+        if not folder or folder.id is None:
              raise HTTPException(status_code=404, detail="Folder not found")
         return FolderResponse(id=folder.id, name=folder.name, created_at=str(folder.created_at))
 
@@ -70,7 +77,7 @@ def list_folders(response: Response):
         folders = repo.list_all()
         return [
             FolderResponse(id=f.id, name=f.name, created_at=str(f.created_at))
-            for f in folders
+            for f in folders if f.id is not None
         ]
 
 @router.delete("/folders/{folder_id}")
@@ -118,6 +125,12 @@ async def upload_documents(
 
         if not file.filename:
              raise HTTPException(status_code=400, detail="Filename is missing")
+        
+        # Scan file for viruses
+        # Run synchronous scan in threadpool to avoid blocking event loop
+        is_safe = await run_in_threadpool(scanner.scan_bytes, file.filename, file_bytes)
+        if not is_safe:
+            raise HTTPException(status_code=400, detail=f"Malware detected in {file.filename}. Upload rejected.")
 
         if folder_id:
             with Session(engine) as session:
@@ -242,7 +255,9 @@ def list_documents(response: Response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     with Session(engine) as session:
-        stmt = select(Document).order_by(desc(Document.created_at))
+        # Get the attribute for sorting to satisfy type checker
+        created_at_col = getattr(Document, "created_at")
+        stmt = select(Document).order_by(desc(created_at_col))
         docs = session.exec(stmt).all()
         return [
             {
@@ -263,6 +278,8 @@ def create_chat(req: ChatThreadCreate):
     with Session(engine) as session:
         repo = ChatRepo(session)
         thread = repo.create_thread(req.title or "New Chat", req.folder_id, req.document_id, req.parent_id, req.is_starred)
+        if thread.id is None:
+             raise HTTPException(status_code=500, detail="Failed to create chat thread")
         return ChatThreadResponse(
             id=thread.id,
             title=thread.title,
@@ -294,7 +311,7 @@ def list_chats(response: Response, folder_id: int | None = None, document_id: in
                 updated_at=str(t.updated_at),
                 messages=[] # Don't load messages on list for perf
             )
-            for t in threads
+            for t in threads if t.id is not None
         ]
 
 @router.get("/chats/{thread_id}", response_model=ChatThreadResponse)
@@ -302,7 +319,7 @@ def get_chat(thread_id: int):
     with Session(engine) as session:
         repo = ChatRepo(session)
         thread = repo.get_thread(thread_id)
-        if not thread:
+        if not thread or thread.id is None:
             raise HTTPException(status_code=404, detail="Chat not found")
         
         # Sort messages by creation time
@@ -322,10 +339,10 @@ def get_chat(thread_id: int):
                     id=m.id,
                     role=m.role,
                     content=m.content,
-                    citations=m.citations,
+                    citations=[Citation(**c) if isinstance(c, dict) else c for c in (m.citations or [])], 
                     reactions=m.reactions,
                     created_at=str(m.created_at)
-                ) for m in msgs
+                ) for m in msgs if m.id is not None
             ]
         )
 
@@ -334,7 +351,7 @@ def update_chat(thread_id: int, req: ChatThreadUpdate):
     with Session(engine) as session:
         repo = ChatRepo(session)
         thread = repo.update_thread(thread_id, req.title, req.is_starred)
-        if not thread:
+        if not thread or thread.id is None:
             raise HTTPException(status_code=404, detail="Chat not found")
         
         return ChatThreadResponse(
@@ -354,14 +371,14 @@ def add_reaction(message_id: int, req: ReactionCreate):
     with Session(engine) as session:
         repo = ChatRepo(session)
         msg = repo.add_reaction(message_id, req.emoji, role="user")
-        if not msg:
+        if not msg or msg.id is None:
             raise HTTPException(status_code=404, detail="Message not found")
         
         return ChatMessageResponse(
             id=msg.id,
             role=msg.role,
             content=msg.content,
-            citations=msg.citations,
+            citations=[Citation(**c) if isinstance(c, dict) else c for c in (msg.citations or [])],
             reactions=msg.reactions,
             created_at=str(msg.created_at)
         )

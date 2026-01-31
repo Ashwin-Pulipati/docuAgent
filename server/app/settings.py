@@ -30,7 +30,10 @@ class Settings(BaseSettings):
     
     default_top_k: int = Field(default=6)
     
-    database_url: str = Field(default="")  
+    database_url: str = Field(default="")
+    
+    clamav_host: str = Field(default="localhost")
+    clamav_port: int = Field(default=3310)
 
 
 settings = Settings()
