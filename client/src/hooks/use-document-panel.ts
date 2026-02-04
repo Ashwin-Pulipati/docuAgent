@@ -373,7 +373,12 @@ export function useDocumentPanel({
             ? "Files uploaded successfully! Processing started."
             : "Upload complete.";
         },
-        error: (e) => (e instanceof Error ? e.message : "Upload failed"),
+        error: (e) => {
+          if (e instanceof Error && e.message === "Failed to fetch") {
+            return "Connection failed. Is the backend server running?";
+          }
+          return e instanceof Error ? e.message : "Upload failed";
+        },
       });
 
       const results = await uploadPromise;

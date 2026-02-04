@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     
     clamav_host: str = Field(default="localhost")
     clamav_port: int = Field(default=3310)
+    
+    enable_malware_scanning: bool = Field(default=True)
 
 
 settings = Settings()

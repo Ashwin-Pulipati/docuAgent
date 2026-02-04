@@ -126,11 +126,20 @@ async def upload_documents(
         if not file.filename:
              raise HTTPException(status_code=400, detail="Filename is missing")
         
-        # Scan file for viruses
-        # Run synchronous scan in threadpool to avoid blocking event loop
-        is_safe = await run_in_threadpool(scanner.scan_bytes, file.filename, file_bytes)
-        if not is_safe:
-            raise HTTPException(status_code=400, detail=f"Malware detected in {file.filename}. Upload rejected.")
+        # Scan file for viruses (if enabled)
+        if settings.enable_malware_scanning:
+            # Run synchronous scan in threadpool to avoid blocking event loop
+            try:
+                is_safe = await run_in_threadpool(scanner.scan_bytes, file.filename, file_bytes)
+                if not is_safe:
+                    raise HTTPException(status_code=400, detail=f"Malware detected in {file.filename}. Upload rejected.")
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"Error scanning file {file.filename}: {e}")
+                # If scanner fails, we can choose to fail open or closed. 
+                # For safety, we fail closed, but provide a clear error.
+                raise HTTPException(status_code=500, detail=f"File scanning service failed: {str(e)}")
 
         if folder_id:
             with Session(engine) as session:
